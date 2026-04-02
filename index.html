@@ -1,0 +1,1432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sports Coordinator - Tournament System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#162447">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/styles.css?v=6">
+<script>
+  // Apply dark mode early to prevent flash
+  if(localStorage.getItem('darkMode')==='dark') document.documentElement.setAttribute('data-theme','dark');
+</script>
+</head>
+
+<body>
+
+<!-- LOADING SPLASH -->
+<div id="appSplash" style="position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg,#162447);gap:18px;transition:opacity .4s">
+  <div style="font-size:3rem;animation:splashPulse 1.2s ease-in-out infinite">🏆</div>
+  <div style="font-weight:700;font-size:1.15rem;color:var(--text,#e6edf3);letter-spacing:.5px">SportsSys</div>
+  <div style="width:48px;height:48px;border:3px solid rgba(255,255,255,.1);border-top-color:var(--primary,#4f7cdb);border-radius:50%;animation:splashSpin .7s linear infinite"></div>
+</div>
+<style>
+@keyframes splashSpin{to{transform:rotate(360deg)}}
+@keyframes splashPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.12);opacity:.7}}
+</style>
+
+<!-- LOGIN -->
+<div id="login" style="display:none">
+  <div class="login-box">
+    <div class="brand" style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:6px">
+      <span class="login-kicker">Sports Coordinator Portal</span>
+      <div class="logo" aria-hidden="true" style="font-size: 36px">🏆</div>
+      <h2 style="margin:0">SportsSys</h2>
+    </div>
+    <p class="muted small center" style="margin-bottom:8px">Manage events, schedules, teams and brackets with confidence</p>
+    <form id="loginForm" onsubmit="doLogin(); return false;">
+      <input id="user" name="user" placeholder="Username" autocomplete="username" autofocus>
+      <input id="pass" name="pass" type="password" placeholder="Password" autocomplete="current-password">
+      <button type="submit" class="form-btn primary-btn">Sign in</button>
+      <button type="button" class="secondary-btn" onclick="forgotPassword()">Forgot password?</button>
+    </form>
+  </div>
+</div>
+
+<!-- SPORT SELECTION -->
+<div id="sportSelect" style="display:none; height:100vh; flex-direction:column; justify-content:center; align-items:center; background:var(--bg); padding:20px; overflow-y:auto;">
+  <div id="loginWelcomeBanner" class="login-welcome-banner" style="display:none" role="status" aria-live="polite">
+    <div class="login-welcome-icon" aria-hidden="true">👋</div>
+    <div>
+      <div class="login-welcome-title">Welcome</div>
+      <div id="loginWelcomeText" class="login-welcome-text">You are now signed in.</div>
+    </div>
+  </div>
+  <div style="text-align:center; margin-bottom:30px;">
+    <h2 style="font-size:2.5rem; color:var(--primary); margin-bottom:10px;">Select Your Sport</h2>
+    <p style="color:var(--muted-text); font-size:1.1rem;">Choose a discipline to manage its events and tournaments</p>
+  </div>
+  
+  <div class="sport-slider-container">
+    <button class="slider-btn prev-btn" onclick="scrollSports(-1)">&#10094;</button>
+    <div id="sportButtons" class="sport-slider"></div>
+    <button class="slider-btn next-btn" onclick="scrollSports(1)">&#10095;</button>
+  </div>
+  
+  <div style="margin-top:40px;" id="manageAllBtn">
+    <button class="form-btn accent-btn" onclick="showAll()" style="padding:14px 32px; font-size:1.1rem; border-radius:999px; box-shadow:0 8px 20px rgba(23,162,184,0.2);">Manage All Sports</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" class="layout" style="display:none">
+
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">🏆</div>
+      <h2>SportsSys</h2>
+      <p class="sidebar-tagline">Sports Coordinator Panel</p>
+    </div>
+    <div class="sidebar-divider"></div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-label">MAIN</div>
+      <button class="nav-btn active" data-section="dash" onclick="show('dash')" title="Dashboard">
+        <span class="nav-icon">📊</span><span class="nav-text">Dashboard</span>
+      </button>
+      <button class="nav-btn" id="usersBtn" data-section="users" onclick="show('users')" title="Users">
+        <span class="nav-icon">👤</span><span class="nav-text">Users</span>
+      </button>
+      <button class="nav-btn" data-section="teams" onclick="show('teams')" title="Teams & Players">
+        <span class="nav-icon">👥</span><span class="nav-text">Teams & Players</span>
+      </button>
+      <div class="sidebar-label">COMPETITIONS</div>
+      <button class="nav-btn" id="tournamentsBtn" data-section="tournaments" onclick="show('tournaments')" title="Tournaments">
+        <span class="nav-icon">🏅</span><span class="nav-text">Tournaments</span>
+      </button>
+      <button class="nav-btn" data-section="schedules" onclick="show('schedules')" title="Schedules">
+        <span class="nav-icon">📅</span><span class="nav-text">Schedules</span>
+      </button>
+      <button class="nav-btn" data-section="scoring" onclick="show('scoring')" title="Bracketing">
+        <span class="nav-icon">🔀</span><span class="nav-text">Bracketing</span>
+      </button>
+      <button class="nav-btn" id="standingsBtn" data-section="standings" onclick="show('standings')" title="Standings">
+        <span class="nav-icon">📈</span><span class="nav-text">Standings</span>
+      </button>
+      <div class="sidebar-label">OTHER</div>
+      <button class="nav-btn" data-section="announcements" onclick="show('announcements')" title="Announcements">
+        <span class="nav-icon">📢</span><span class="nav-text">Announcements</span>
+      </button>
+      <button class="nav-btn" data-section="messages" onclick="show('messages')" title="Messages">
+        <span class="nav-icon">💬</span><span class="nav-text">Messages</span>
+        <span id="msgSidebarBadge" class="msg-sidebar-badge" style="display:none">0</span>
+      </button>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-divider"></div>
+    <button class="nav-btn sidebar-settings-btn" data-section="settings" onclick="show('settings')">
+      <span class="nav-icon">⚙️</span><span class="nav-text">Settings</span>
+    </button>
+  </aside>
+
+  <main class="main">
+    <!-- Mobile sidebar overlay -->
+    <div class="modal-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+    <div class="topbar">
+      <div class="topbar-left" style="display:flex;align-items:center;gap:12px">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Menu">☰</button>
+        <div>
+          <h3 class="app-title">Sports Coordinator - Event & Tournament Management</h3>
+          <div id="topbarSubText" class="topbar-sub">Manage tournaments, schedules and results</div>
+        </div>
+        <span id="currentSportDisplay" class="sport-badge">All Sports</span>
+      </div>
+      <div class="topbar-right">
+        <div class="search-wrap" style="position:relative">
+          <span class="search-icon">🔍</span>
+          <input id="globalSearch" class="search-input" placeholder="Search anything..." oninput="globalSearch(this.value)" autocomplete="off">
+          <div id="globalSearchResults" class="global-search-dropdown" style="display:none"></div>
+        </div>
+        <div class="topbar-actions">
+          <button class="topbar-btn" id="publicViewerBtn" onclick="openPublicViewer()" title="Public Viewer Link">
+            <span class="topbar-btn-icon">🔗</span>
+            <span class="topbar-btn-label">Public</span>
+          </button>
+          <button id="changeSportBtn" class="topbar-btn" onclick="changeSport()" title="Change Sport">
+            <span class="topbar-btn-icon">🔄</span>
+            <span class="topbar-btn-label">Sport</span>
+          </button>
+          <button class="topbar-btn" id="darkModeToggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode" title="Toggle dark mode">
+            <span class="topbar-btn-icon">🌙</span>
+          </button>
+          <div class="notif-wrap" style="position:relative">
+            <button class="topbar-btn notif-bell" onclick="toggleNotifPanel()" aria-label="Notifications" title="Notifications">
+              <span class="topbar-btn-icon">🔔</span>
+              <span id="notifBadge" class="notif-badge" style="display:none">0</span>
+            </button>
+            <div id="notifPanel" style="display:none;position:absolute;right:0;top:48px;width:380px;max-width:90vw;max-height:400px;overflow-y:auto;background:var(--surface);border:1px solid rgba(16,24,40,0.08);border-radius:12px;box-shadow:0 12px 36px rgba(16,24,40,0.12);z-index:9999">
+              <div style="padding:14px 16px;border-bottom:1px solid rgba(16,24,40,0.06);display:flex;justify-content:space-between;align-items:center">
+                <h4 style="margin:0;font-weight:700">📬 Notifications</h4>
+                <button class="form-btn secondary-btn" style="padding:4px 10px;font-size:0.75rem;margin:0" onclick="clearNotifications()">Clear All</button>
+              </div>
+              <div id="notifList" style="padding:8px"></div>
+            </div>
+          </div>
+          <div class="profile" style="position:relative">
+            <button id="userMenuBtn" class="profile-btn" onclick="toggleUserMenu()">YM</button>
+            <div id="userMenu" class="profile-menu" style="display:none">
+              <div style="padding:10px 14px;border-bottom:1px solid rgba(16,24,40,0.06);font-size:0.8rem;color:var(--muted-text)">
+                Signed in as <strong id="userMenuName" style="color:var(--text)"></strong>
+              </div>
+              <div class="profile-item" onclick="show('settings');document.getElementById('userMenu').style.display='none'">⚙️ Settings</div>
+              <div class="profile-item" onclick="logout()" style="color:var(--danger)">🚪 Logout</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+<!-- DASHBOARD -->
+<div id="dash" class="section">
+  <!-- Stats Row - Always Visible -->
+  <div class="stats-row" style="display:flex; gap:10px; overflow-x:auto; flex-wrap:wrap;">
+    <div class="card" style="display:flex; align-items:center; gap:10px; flex:1; min-width:160px; padding:10px 14px;">
+      <div style="font-size:1.4rem; background:rgba(31,60,136,0.08); width:38px; height:38px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--primary)">🏆</div>
+      <div>
+        <h4 style="margin:0; color:var(--muted-text); font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px">Tournaments</h4>
+        <h2 id="dTour" style="margin:0; font-size:1.4rem; color:var(--text)">0</h2>
+      </div>
+    </div>
+    <div class="card" style="display:flex; align-items:center; gap:10px; flex:1; min-width:160px; padding:10px 14px;">
+      <div style="font-size:1.4rem; background:rgba(23,162,184,0.08); width:38px; height:38px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--accent)">🛡️</div>
+      <div>
+        <h4 style="margin:0; color:var(--muted-text); font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px">Teams</h4>
+        <h2 id="dTeam" style="margin:0; font-size:1.4rem; color:var(--text)">0</h2>
+      </div>
+    </div>
+    <div class="card" style="display:flex; align-items:center; gap:10px; flex:1; min-width:160px; padding:10px 14px;">
+      <div style="font-size:1.4rem; background:rgba(40,167,69,0.08); width:38px; height:38px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--success)">🏃</div>
+      <div>
+        <h4 style="margin:0; color:var(--muted-text); font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px">Players</h4>
+        <h2 id="dPlayer" style="margin:0; font-size:1.4rem; color:var(--text)">0</h2>
+      </div>
+    </div>
+    <div class="card" style="display:flex; align-items:center; gap:10px; flex:1; min-width:160px; padding:10px 14px;">
+      <div style="font-size:1.4rem; background:rgba(231,76,60,0.08); width:38px; height:38px; display:flex; align-items:center; justify-content:center; border-radius:8px; color:var(--danger)">⚔️</div>
+      <div>
+        <h4 style="margin:0; color:var(--muted-text); font-weight:600; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px">Matches</h4>
+        <h2 id="dMatch" style="margin:0; font-size:1.4rem; color:var(--text)">0</h2>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upcoming Matches Auto-Slide -->
+  <div class="dash-carousel" style="margin-top:14px; position:relative;">
+    <button class="carousel-arrow carousel-prev" onclick="dashCarouselNav(-1)" aria-label="Previous">‹</button>
+    <button class="carousel-arrow carousel-next" onclick="dashCarouselNav(1)" aria-label="Next">›</button>
+    <div class="card" style="padding:14px 18px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; display:flex; align-items:center; gap:8px; font-size:1rem;">
+          <span style="font-size:1.3rem;">📅</span> Upcoming Matches
+        </h3>
+        <button class="form-btn secondary-btn" onclick="show('schedules')" style="padding:5px 12px; font-size:0.8rem;">View All</button>
+      </div>
+      <div class="carousel-viewport">
+        <div class="carousel-track" id="dashCarouselTrack">
+          <div id="upcomingMatchesList" style="display:flex; flex-direction:row; min-width:100%;">
+            <div style="text-align:center; padding:40px 20px; color:var(--muted-text); width:100%; font-size:0.9rem;">No upcoming matches scheduled</div>
+          </div>
+        </div>
+      </div>
+      <div class="carousel-dots" id="dashCarouselDots" style="margin-top:10px;"></div>
+      <div class="carousel-progress"><div class="carousel-progress-bar"></div></div>
+    </div>
+  </div>
+
+  <!-- Bracket Preview + Intramurals Chart Side-by-Side -->
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px;" class="dash-bottom-grid">
+    <div class="card" style="padding:14px 18px;">
+      <h3 style="margin:0 0 8px 0; font-size:1rem; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:1.3rem;">🏅</span> Quick Bracket Preview
+      </h3>
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <input id="overviewSearch" placeholder="Search tournaments..." style="flex:1;padding:7px 10px;font-size:0.85rem;border-radius:8px;border:1px solid rgba(16,24,40,0.12)" oninput="filterOverviewSelect(this.value)">
+        <select id="overviewBracketSelect" onchange="renderBracketPreview(this.value)" style="min-width:180px;padding:7px 10px;font-size:0.85rem;border-radius:8px;border:1px solid rgba(16,24,40,0.12)">
+          <option value="">Select tournament...</option>
+        </select>
+      </div>
+      <div id="overviewBracketPreview" style="min-height:160px; max-height:280px; overflow:auto; border:1px solid rgba(16,24,40,0.04); padding:10px; border-radius:8px; background:var(--surface)"></div>
+    </div>
+    <div class="card" id="dashStandingsChart" style="padding:14px 18px; position:relative;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <h3 style="margin:0; font-size:1rem; display:flex; align-items:center; gap:8px;">
+          <span style="font-size:1.3rem;">📊</span> <span id="chartTitle">Intramurals Unit Standings</span>
+        </h3>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button class="form-btn secondary-btn" onclick="chartCarouselNav(-1)" style="padding:4px 10px; font-size:0.85rem; border-radius:8px;" id="chartPrevBtn">‹</button>
+          <span id="chartIndicator" style="font-size:0.78rem; color:var(--muted-text); font-weight:600; min-width:40px; text-align:center;">1/1</span>
+          <button class="form-btn secondary-btn" onclick="chartCarouselNav(1)" style="padding:4px 10px; font-size:0.85rem; border-radius:8px;" id="chartNextBtn">›</button>
+        </div>
+      </div>
+      <div id="intramuralsChartContainer" style="min-height:320px;">
+        <canvas id="intramuralsChart" style="width:100%;height:340px"></canvas>
+      </div>
+      <div id="intramuralsChartLegend" style="margin-top:8px; font-size:0.82rem"></div>
+    </div>
+  </div>
+</div>
+
+<!-- USERS -->
+<div id="users" class="section">
+  <div class="landscape-layout">
+    <div class="landscape-left">
+      <div class="card create-form">
+        <h3>Register Organizer</h3>
+        <input id="regUser" placeholder="Username">
+        <input id="regPass" placeholder="Password">
+        <input type="hidden" id="regRole" value="organizer">
+        <div id="regCampusDiv" style="display:none;margin-top:0">
+          <select id="regCampus" class="campus-select" style="width:100%">
+            <option value="">Select Campus</option>
+          </select>
+        </div>
+        <div id="regOrgSportsDiv" style="margin-top:8px">
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Assigned Sports</label>
+          <div id="regOrgSportsContainer" style="display:flex;flex-wrap:wrap"></div>
+        </div>
+        <div id="regOrgEventsDiv" style="margin-top:8px">
+          <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Assigned Events</label>
+          <div id="regOrgEventsContainer" style="display:flex;flex-wrap:wrap"></div>
+        </div>
+        <button class="form-btn" onclick="registerUser()" style="margin-top:10px">Register Organizer</button>
+      </div>
+    </div>
+    <div class="landscape-right">
+      <div class="card">
+        <h3>Users List</h3>
+        <div id="usersListContainer"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TEAMS & PLAYERS -->
+<div id="teams" class="section">
+  <div class="landscape-layout">
+    <div class="landscape-left">
+      <!-- Team Creator -->
+      <div class="card create-form" style="margin-bottom:16px">
+    <h3 style="display:flex;align-items:center;gap:8px">➕ Create Teams</h3>
+    <div class="resp-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Sport</label>
+        <select id="teamSport" onchange="onTeamSportChange()" style="margin-top:0"><option value="">Select Sport</option></select>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Tournament (optional)</label>
+        <select id="teamTournament" style="margin-top:0"><option value="">No Tournament (standalone)</option></select>
+      </div>
+    </div>
+    <div style="margin-top:12px;padding:14px;border:1px solid rgba(16,24,40,0.06);border-radius:8px;background:var(--bg)">
+      <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px">Team Names <span style="font-weight:400;color:var(--muted-text)">(one per line or comma-separated)</span></label>
+      <textarea id="bulkTeamNames" rows="3" placeholder="e.g.&#10;Unit 1&#10;Unit 2&#10;Unit 3" style="margin-top:0;font-family:inherit;resize:vertical"></textarea>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <button class="form-btn secondary-btn" type="button" onclick="quickFillTeams(4)" style="padding:6px 10px;font-size:0.8rem;margin-top:0">+ Unit 1–4</button>
+        <button class="form-btn secondary-btn" type="button" onclick="quickFillTeams(6)" style="padding:6px 10px;font-size:0.8rem;margin-top:0">+ Unit 1–6</button>
+        <button class="form-btn secondary-btn" type="button" onclick="quickFillTeams(8)" style="padding:6px 10px;font-size:0.8rem;margin-top:0">+ Unit 1–8</button>
+      </div>
+    </div>
+    <div class="resp-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Group (optional)</label>
+        <input id="teamGroup" placeholder="e.g., Group A" style="margin-top:0">
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Team Logo <span style="font-weight:400;color:var(--muted-text);font-size:0.78rem">(optional)</span></label>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div id="createTeamLogoPreview" style="width:34px;height:34px;border-radius:6px;border:2px dashed #ddd;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8f9fa;flex-shrink:0;font-size:0.6rem;color:#aaa">📷</div>
+          <input type="file" id="createTeamLogoFile" accept="image/*" onchange="previewCreateTeamLogo(this)" style="font-size:0.75rem;flex:1;margin:0">
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <button class="form-btn" onclick="addTeamsBulk()" style="width:100%">Create Teams</button>
+    </div>
+        </div>
+
+  <!-- Bulk Player Import -->
+  <div class="card create-form" style="margin-bottom:20px">
+    <h3 style="display:flex;align-items:center;gap:8px">👥 Bulk Add Players</h3>
+    <p style="font-size:0.85rem;color:var(--muted-text);margin-bottom:8px">Quickly add multiple players to a team at once.</p>
+    <div class="resp-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Sport</label>
+        <select id="playerSport" onchange="onPlayerSportChange()" style="margin-top:0"><option value="">Select Sport</option></select>
+      </div>
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Team</label>
+        <select id="playerTeam" style="margin-top:0"></select>
+      </div>
+    </div>
+    <div class="resp-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+      <div>
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Default Position</label>
+        <select id="playerPosition" style="margin-top:0"></select>
+      </div>
+      <div></div>
+    </div>
+    <div style="margin-top:10px;padding:14px;border:1px solid rgba(16,24,40,0.06);border-radius:8px;background:var(--bg)">
+      <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px">Player Names <span style="font-weight:400;color:var(--muted-text)">(one per line)</span></label>
+      <textarea id="bulkPlayerNames" rows="4" placeholder="e.g.&#10;Juan Dela Cruz&#10;Maria Santos&#10;Carlos Reyes" style="margin-top:0;font-family:inherit;resize:vertical"></textarea>
+    </div>
+    <button class="form-btn" onclick="addPlayersBulk()" style="margin-top:10px">Add All Players</button>
+  </div>
+
+
+    </div>
+    <div class="landscape-right">
+      <!-- Teams List -->
+      <div class="card">
+        <h3>Teams</h3>
+        <div id="teamsContainer"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOURNAMENTS -->
+<div id="tournaments" class="section">
+  <div class="landscape-layout">
+    <div class="landscape-left">
+    <!-- Big Event (Intramurals) -->
+    <div class="card create-form" style="border:2px solid var(--success); background:linear-gradient(180deg,rgba(40,167,69,0.04),transparent)">
+      <h3 style="display:flex;align-items:center;gap:8px">🏆 Create Big Event <span style="font-size:0.8rem;font-weight:normal;color:var(--muted-text)">(Intramurals)</span></h3>
+      <p style="font-size:0.85rem;color:var(--muted-text);margin-bottom:12px">Multi-sport event where units compete across all sports. Overall standings track total wins.</p>
+      <input id="bigEventName" placeholder="Event Name (e.g., Intramurals 2026)">
+      
+      <!-- Games/Sports Section -->
+      <div style="margin-top:12px;padding:12px;border:1px solid rgba(16,24,40,0.1);border-radius:8px;background:var(--bg)">
+        <label style="font-weight:600;font-size:0.9rem;display:flex;align-items:center;gap:6px">🎮 Games/Sports</label>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="bigEventNewGame" placeholder="Add game (e.g., Sepak Takraw)" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addBigEventGame()}">
+          <button class="form-btn" type="button" onclick="addBigEventGame()" style="padding:8px 12px">+ Add</button>
+        </div>
+        <!-- New Sport Positions Panel -->
+        <div id="newSportPanel" style="display:none;margin-top:8px;padding:12px;border:1px solid rgba(31,60,136,0.2);border-radius:8px;background:rgba(31,60,136,0.03)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <label style="font-weight:600;font-size:0.85rem;color:var(--primary)">📋 Set positions for: <span id="newSportName" style="color:var(--text)"></span></label>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="newSportPositionInput" placeholder="e.g., Forward, Guard, Center" style="flex:1;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:0.85rem" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewSportPosition()}">
+            <button class="form-btn" type="button" onclick="addNewSportPosition()" style="padding:6px 10px;font-size:0.85rem">+ Add</button>
+          </div>
+          <div id="newSportPositionsList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:28px"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+            <button class="form-btn secondary-btn" type="button" onclick="cancelNewSport()" style="padding:6px 14px;font-size:0.85rem">Cancel</button>
+            <button class="form-btn" type="button" onclick="confirmNewSport()" style="padding:6px 14px;font-size:0.85rem">✓ Save Sport</button>
+          </div>
+        </div>
+        <div id="bigEventGamesList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+        <div style="margin-top:8px;border-top:1px dashed rgba(16,24,40,0.15);padding-top:8px">
+          <label style="font-size:0.85rem;color:var(--muted-text)">Or select existing sports:</label>
+          <div id="bigEventSports" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px"></div>
+        </div>
+      </div>
+      
+      <!-- Units Section -->
+      <div style="margin-top:12px;padding:12px;border:1px solid rgba(16,24,40,0.1);border-radius:8px;background:var(--bg)">
+        <label style="font-weight:600;font-size:0.9rem;display:flex;align-items:center;gap:6px">🏫 Participating Units</label>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="bigEventNewUnit" placeholder="Unit name (e.g., Unit 1)" style="flex:1">
+          <button class="form-btn" type="button" onclick="addBigEventUnit()" style="padding:8px 12px">+ Add</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button class="form-btn secondary-btn" type="button" onclick="addQuickUnits(4)" style="padding:6px 10px;font-size:0.8rem">+ Unit 1-4</button>
+          <button class="form-btn secondary-btn" type="button" onclick="addQuickUnits(6)" style="padding:6px 10px;font-size:0.8rem">+ Unit 1-6</button>
+          <button class="form-btn secondary-btn" type="button" onclick="addQuickUnits(8)" style="padding:6px 10px;font-size:0.8rem">+ Unit 1-8</button>
+        </div>
+        <div id="bigEventUnitsList" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+        <div style="margin-top:8px;border-top:1px dashed rgba(16,24,40,0.15);padding-top:8px">
+          <label style="font-size:0.85rem;color:var(--muted-text)">Or select existing groups:</label>
+          <div id="bigEventUnits" style="max-height:100px;overflow-y:auto;margin-top:6px"></div>
+        </div>
+      </div>
+      
+      <div style="display:flex;gap:8px" class="resp-grid-2">
+        <input id="bigEventStartDate" type="date" placeholder="Start Date">
+        <input id="bigEventEndDate" type="date" placeholder="End Date">
+      </div>
+      <button class="form-btn accent-btn" style="margin-top:12px" onclick="createBigEvent()">Create Big Event</button>
+    </div>
+
+    <!-- Single Sport Tournament -->
+    <div class="card create-form">
+      <h3 style="display:flex;align-items:center;gap:8px">🎯 Create Sport Tournament <span style="font-size:0.8rem;font-weight:normal;color:var(--muted-text)">(Single Sport)</span></h3>
+      <p style="font-size:0.85rem;color:var(--muted-text);margin-bottom:12px">Standard tournament for one specific sport. Generate brackets in the Bracketing section.</p>
+      <input id="tName" placeholder="Tournament Name">
+      <select id="tFormat">
+        <option value="single">Single Elimination</option>
+        <option value="double">Double Elimination</option>
+        <option value="roundrobin">Round Robin</option>
+        <option value="groupknockout">Group + Knockout</option>
+      </select>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="tAutoSeed" checked> Auto-seed</label>
+        <label style="display:flex;align-items:center;gap:6px">Best-of: <select id="tBestOf" style="width:72px;margin-left:6px"><option>1</option><option>3</option><option>5</option></select></label>
+      </div>
+      <select id="tSport" style="display: none;"></select>
+      <div id="tTeams"></div>
+      <div style="display:flex;gap:8px">
+        <input id="tStartDate" type="date" placeholder="Start Date">
+        <input id="tEndDate" type="date" placeholder="End Date">
+      </div>
+      <button class="form-btn" onclick="addTournament()">Create Tournament</button>
+    </div>
+    </div>
+    <div class="landscape-right">
+  <div class="card">
+    <h3>Tournaments</h3>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <input id="tSearch" placeholder="Search tournaments..." oninput="loadTournaments(1)" style="flex:1; padding:8px">
+      <select id="tSort" onchange="loadTournaments(1)">
+        <option value="name_asc">Name A→Z</option>
+        <option value="name_desc">Name Z→A</option>
+        <option value="date_asc">Start Date ↑</option>
+        <option value="date_desc">Start Date ↓</option>
+        <option value="teams_desc">Teams ↓</option>
+        <option value="teams_asc">Teams ↑</option>
+      </select>
+    </div>
+    <div style="overflow:auto">
+      <table id="tournamentTable" style="width:100%; border-collapse:collapse">
+        <thead>
+          <tr style="text-align:left; border-bottom:1px solid rgba(16,24,40,0.06)">
+            <th style="padding:8px">Name</th>
+            <th style="padding:8px">Format</th>
+            <th style="padding:8px">Dates</th>
+            <th style="padding:8px">Status</th>
+            <th style="padding:8px">Teams</th>
+            <th style="padding:8px">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tournamentList"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <div id="tPagination"></div>
+      <div style="color:#666">Showing <span id="tShowing">0</span> of <span id="tTotal">0</span></div>
+    </div>
+  </div>
+  <!-- Big Events List -->
+  <div class="card">
+    <h3>🏆 Big Events (Intramurals)</h3>
+    <div id="bigEventsList" style="display:grid;gap:12px"></div>
+  </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCHEDULES -->
+<div id="schedules" class="section">
+  <!-- Schedule Form - Full Width -->
+  <div class="card create-form" style="margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <h3 style="margin:0">📅 Schedule Matches</h3>
+      <button class="form-btn" style="padding:8px 18px;font-size:0.85rem;margin:0;border-radius:10px;background:linear-gradient(135deg,rgba(40,167,69,0.9),rgba(16,185,129,0.9));color:#fff;font-weight:700;display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(40,167,69,0.2)" onclick="scrollToMatchHistory()">📜 Match History</button>
+    </div>
+    <!-- Tabs -->
+    <div id="schedTabs" style="display:flex;gap:0;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid rgba(16,24,40,0.1)">
+      <button class="sched-tab active" onclick="switchSchedTab('single')" id="schedTabSingle" style="flex:1;padding:10px;border:none;cursor:pointer;font-weight:700;font-size:0.85rem;transition:all 0.2s">Single Match</button>
+      <button class="sched-tab" onclick="switchSchedTab('bulk')" id="schedTabBulk" style="flex:1;padding:10px;border:none;cursor:pointer;font-weight:700;font-size:0.85rem;transition:all 0.2s">Bulk Schedule</button>
+      <button class="sched-tab" onclick="switchSchedTab('auto')" id="schedTabAuto" style="flex:1;padding:10px;border:none;cursor:pointer;font-weight:700;font-size:0.85rem;transition:all 0.2s">Auto-Generate</button>
+    </div>
+
+    <!-- ===== SINGLE MATCH TAB ===== -->
+    <div id="schedPanelSingle">
+      <!-- Bracket Match Selection -->
+      <div style="margin-bottom:14px">
+        <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Bracket Match</label>
+        <select id="mBracketMatch" onchange="onBracketMatchSelected()" style="width:100%">
+          <option value="">Select a bracket match to schedule...</option>
+        </select>
+      </div>
+      <!-- Bracket Match Info Preview -->
+      <div id="bracketMatchInfo" style="display:none;margin-bottom:14px;padding:12px 16px;border-radius:10px;background:linear-gradient(135deg,rgba(31,60,136,0.06),rgba(52,152,219,0.06));border:1px solid rgba(31,60,136,0.1)"></div>
+
+      <div class="sched-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Date</label>
+          <input id="mDate" type="date" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Start Time</label>
+          <div style="display:flex;gap:4px">
+            <select id="mHour" onchange="updateEndTimeFromDuration()" style="flex:1">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option>
+              <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            </select>
+            <select id="mMinute" onchange="updateEndTimeFromDuration()" style="flex:1">
+              <option value="00" selected>00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+            </select>
+            <select id="mAMPM" onchange="updateEndTimeFromDuration()" style="flex:1">
+              <option value="AM" selected>AM</option><option value="PM">PM</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Duration</label>
+          <select id="mDuration" onchange="updateEndTimeFromDuration()" style="width:100%">
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60" selected>1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+            <option value="custom">Custom end time</option>
+          </select>
+        </div>
+      </div>
+      <div id="customEndTimeRow" style="display:none;margin-bottom:12px">
+        <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">End Time</label>
+        <div style="display:flex;gap:4px">
+          <select id="mEndHour" style="flex:1">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+            <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+            <option value="9" selected>9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          </select>
+          <select id="mEndMinute" style="flex:1">
+            <option value="00" selected>00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+          </select>
+          <select id="mEndAMPM" style="flex:1">
+            <option value="AM" selected>AM</option><option value="PM">PM</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Court / Venue</label>
+        <input id="mCourt" placeholder="e.g. Court 1" style="width:100%">
+        <div id="courtChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+      </div>
+      <button class="form-btn" onclick="addMatch()" style="width:100%">📅 Schedule Match</button>
+    </div>
+
+    <!-- ===== BULK SCHEDULE TAB ===== -->
+    <div id="schedPanelBulk" style="display:none">
+      <p style="font-size:0.85rem;color:var(--muted-text);margin:0 0 8px">Schedule multiple matches at once. One match per line.</p>
+      <div class="sched-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Date</label>
+          <input id="bulkDate" type="date" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Starting Time</label>
+          <div style="display:flex;gap:4px">
+            <select id="bulkHour" style="flex:1">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option>
+              <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            </select>
+            <select id="bulkMinute" style="flex:1">
+              <option value="00" selected>00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+            </select>
+            <select id="bulkAMPM" style="flex:1">
+              <option value="AM" selected>AM</option><option value="PM">PM</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Match Duration</label>
+          <select id="bulkDuration" style="width:100%">
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60" selected>1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+          </select>
+        </div>
+      </div>
+      <div class="sched-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Break Between Matches</label>
+          <select id="bulkBreak" style="width:100%">
+            <option value="0">No break</option>
+            <option value="10">10 min</option>
+            <option value="15" selected>15 min</option>
+            <option value="30">30 min</option>
+            <option value="60">1 hour</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Court / Venue</label>
+          <input id="bulkCourt" placeholder="e.g. Court 1" style="width:100%" value="Court 1">
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Match List (one per line: Team A vs Team B)</label>
+        <textarea id="bulkMatchList" rows="6" placeholder="Team Alpha vs Team Beta&#10;Team Gamma vs Team Delta&#10;Team Omega vs Team Sigma" style="width:100%;font-family:monospace;font-size:0.9rem;padding:10px;border:1px solid rgba(16,24,40,0.1);border-radius:8px;resize:vertical"></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+          <button class="form-btn secondary-btn" onclick="bulkFillFromBrackets()" style="padding:6px 12px;font-size:0.8rem">🏆 Fill from bracket matches</button>
+          <button class="form-btn secondary-btn" onclick="bulkFillFromTeams()" style="padding:6px 12px;font-size:0.8rem">📋 Fill from teams</button>
+          <button class="form-btn secondary-btn" onclick="bulkFillRoundRobin()" style="padding:6px 12px;font-size:0.8rem">🔄 Round Robin matchups</button>
+        </div>
+      </div>
+      <div id="bulkPreview" style="display:none;margin-bottom:12px;max-height:200px;overflow-y:auto;border:1px solid rgba(16,24,40,0.06);border-radius:8px;padding:10px;background:var(--bg);font-size:0.85rem"></div>
+      <div style="display:flex;gap:8px">
+        <button class="form-btn secondary-btn" onclick="previewBulkSchedule()" style="flex:1">👁 Preview</button>
+        <button class="form-btn" onclick="addBulkSchedule()" style="flex:1">📅 Schedule All</button>
+      </div>
+    </div>
+
+    <!-- ===== AUTO-GENERATE TAB ===== -->
+    <div id="schedPanelAuto" style="display:none">
+      <p style="font-size:0.85rem;color:var(--muted-text);margin:0 0 12px">Pick a tournament and auto-generate the entire match schedule.</p>
+      <div style="margin-bottom:12px">
+        <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Tournament</label>
+        <select id="autoTournament" onchange="autoTournamentChanged()" style="width:100%">
+          <option value="">Select a tournament...</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px;padding:8px 12px;background:rgba(31,60,136,0.05);border-radius:8px;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="autoUseBrackets" checked onchange="autoTournamentChanged()" style="cursor:pointer">
+        <label for="autoUseBrackets" style="font-size:0.82rem;cursor:pointer;margin:0">🏆 Only schedule unscheduled bracket matches</label>
+      </div>
+      <div id="autoTournamentInfo" style="display:none;background:var(--bg);border:1px solid rgba(31,60,136,0.12);border-radius:10px;padding:14px;margin-bottom:12px;font-size:0.85rem"></div>
+      <div class="sched-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Start Date</label>
+          <input id="autoStartDate" type="date" style="width:100%">
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Start Time</label>
+          <div style="display:flex;gap:4px">
+            <select id="autoHour" style="flex:1">
+              <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option>
+              <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            </select>
+            <select id="autoMinute" style="flex:1">
+              <option value="00" selected>00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+            </select>
+            <select id="autoAMPM" style="flex:1">
+              <option value="AM" selected>AM</option><option value="PM">PM</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="sched-grid-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Match Duration</label>
+          <select id="autoDuration" style="width:100%">
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60" selected>1 hour</option>
+            <option value="90">1.5 hrs</option>
+            <option value="120">2 hrs</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Break</label>
+          <select id="autoBreak" style="width:100%">
+            <option value="0">None</option>
+            <option value="10">10 min</option>
+            <option value="15" selected>15 min</option>
+            <option value="30">30 min</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Games/Day</label>
+          <select id="autoGamesPerDay" style="width:100%">
+            <option value="4">4 games</option>
+            <option value="6">6 games</option>
+            <option value="8" selected>8 games</option>
+            <option value="10">10 games</option>
+            <option value="99">Unlimited</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Courts (comma separated)</label>
+        <input id="autoCourts" placeholder="Court 1, Court 2, Court 3" value="Court 1" style="width:100%">
+      </div>
+      <div id="autoPreview" style="display:none;margin-bottom:12px;max-height:250px;overflow-y:auto;border:1px solid rgba(16,24,40,0.06);border-radius:8px;padding:12px;background:var(--bg);font-size:0.85rem"></div>
+      <div style="display:flex;gap:8px">
+        <button class="form-btn secondary-btn" onclick="previewAutoSchedule()" style="flex:1">👁 Preview</button>
+        <button class="form-btn" onclick="addAutoSchedule()" style="flex:1">⚡ Generate Schedule</button>
+      </div>
+      </div>
+    </div>
+
+  <!-- Scheduled Matches - Full Width Below -->
+  <div class="card">
+    <h3 style="margin-bottom:12px; display:flex; align-items:center; gap:8px; justify-content:space-between; flex-wrap:wrap;">
+      <span style="display:flex;align-items:center;gap:8px"><span style="font-size:1.3rem;">📋</span> Scheduled Matches</span>
+      <button class="form-btn secondary-btn" style="padding:5px 14px;font-size:0.78rem;margin:0;border-radius:8px;" onclick="scrollToMatchHistory()">📜 Match History</button>
+    </h3>
+    <div id="matchList"></div>
+  </div>
+</div>
+
+<!-- SCORING / BRACKETING -->
+<div id="scoring" class="section">
+  <div class="card" style="padding:24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+      <h3 style="margin:0; display:flex; align-items:center; gap:10px;">
+        <span style="font-size:1.5rem;">🏆</span> Tournament Brackets
+      </h3>
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <label style="font-weight:600; color:var(--muted-text); font-size:0.9rem;">Select Tournament:</label>
+        <select id="sTournament" onchange="onScoringTournamentChange(this.value)" style="min-width:220px; padding:10px 14px; border-radius:10px; border:1px solid rgba(16,24,40,0.1); font-size:0.95rem;">
+          <option value="">Choose a tournament...</option>
+        </select>
+        <button class="form-btn danger-btn" style="display:inline-block; width:auto; padding:10px 18px;" onclick="resetBracketFromScoring()">🔄 Reset Bracket</button>
+      </div>
+    </div>
+
+    <!-- Separate Score Input Panel (above bracket) -->
+    <div id="scoringScorePanel"></div>
+    
+    <div style="display:flex; gap:20px; align-items:flex-start;" class="scoring-layout">
+      <!-- Team Pool Sidebar -->
+      <div id="scoringTeamPool" style="min-width:220px; max-width:260px; max-height:600px; overflow-y:auto; background:var(--bg); border-radius:12px; padding:16px;"></div>
+      
+      <!-- Bracket Display -->
+      <div id="scoringBracketDisplay" style="flex:1; overflow-x:auto; padding:10px 0;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- STANDINGS -->
+<div id="standings" class="section">
+  <div class="card standings-sticky-nav">
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+      <h3 style="margin:0; display:flex; align-items:center; gap:8px;"><span style="font-size:1.3rem;">🏆</span> Standings</h3>
+      <div id="standingsNav" style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;"></div>
+    </div>
+  </div>
+  <div id="standList" style="margin-top:12px;"></div>
+</div>
+
+<!-- BIG EVENT DASHBOARD (Full-page management for an intramural event) -->
+<div id="bigEventDash" class="section">
+  <div id="bigEventDashContent"></div>
+</div>
+
+<!-- ANNOUNCEMENTS -->
+<div id="announcements" class="section">
+  <div class="landscape-layout">
+    <div class="landscape-left">
+      <div class="card create-form">
+        <h3>📢 Post Announcement</h3>
+        <div style="margin-bottom:10px">
+          <label style="font-size:0.8rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Event (optional)</label>
+          <select id="annEvent" style="width:100%">
+            <option value="">General (All Events)</option>
+          </select>
+        </div>
+        <textarea id="annText" rows="3" placeholder="Write your announcement message here..." style="resize:vertical;font-family:inherit"></textarea>
+        <button class="form-btn" onclick="postAnn()" style="margin-top:10px">📢 Post Announcement</button>
+      </div>
+    </div>
+    <div class="landscape-right">
+      <div class="card" id="annList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div id="reports" class="section">
+  <div class="landscape-layout">
+    <div class="landscape-left">
+      <div class="card">
+        <h3 style="display:flex;align-items:center;gap:8px">📊 Reports</h3>
+        <p style="font-size:0.85rem;color:var(--muted-text);margin-bottom:12px">Generate system-wide statistics and export data reports.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="form-btn" onclick="generateReport()">📊 Generate Report</button>
+          <button class="form-btn secondary-btn" onclick="exportAllData()">📥 Export All Data</button>
+        </div>
+        <div id="reportOutput"></div>
+      </div>
+    </div>
+    <div class="landscape-right">
+      <div class="card">
+        <h3 style="display:flex;align-items:center;gap:8px">🏅 Certificates</h3>
+        <p style="font-size:0.85rem;color:var(--muted-text);margin-bottom:12px">Generate participation, winner, or MVP certificates.</p>
+        <label style="font-size:0.82rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Recipient Name</label>
+        <input id="certName" placeholder="Player or Team Name">
+        <label style="font-size:0.82rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Certificate Type</label>
+        <select id="certType">
+          <option value="participation">Certificate of Participation</option>
+          <option value="winner">Winner Certificate</option>
+          <option value="mvp">MVP Certificate</option>
+        </select>
+        <label style="font-size:0.82rem;font-weight:600;color:var(--muted-text);display:block;margin-bottom:4px">Tournament (optional)</label>
+        <select id="certTournament">
+          <option value="">General</option>
+        </select>
+        <button class="form-btn" onclick="generateCertificate()" style="margin-top:8px">🏅 Generate Certificate</button>
+        <div id="certOutput"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGES (Messenger-style) -->
+<div id="messages" class="section">
+  <div class="messenger-container">
+    <!-- Left: Conversation list -->
+    <div class="messenger-sidebar">
+      <div class="messenger-sidebar-header">
+        <h3 style="margin:0;font-size:1.15rem">💬 Chats</h3>
+        <button class="form-btn" style="margin:0;padding:5px 10px;font-size:0.78rem" onclick="openNewChat()" title="New Message">✏️ New</button>
+      </div>
+      <div class="messenger-search">
+        <input type="text" id="chatSearch" placeholder="🔍 Search conversations..." oninput="filterConversations(this.value)">
+      </div>
+      <div id="conversationList" class="messenger-conv-list"></div>
+    </div>
+    <!-- Right: Active chat -->
+    <div class="messenger-chat" id="messengerChatPanel">
+      <div class="messenger-chat-placeholder" id="chatPlaceholder">
+        <div style="font-size:3rem;margin-bottom:12px">💬</div>
+        <div style="font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">Your Messages</div>
+        <div style="font-size:0.88rem;color:var(--muted-text)">Select a conversation or start a new one</div>
+        <button class="form-btn" style="margin-top:14px;padding:8px 20px" onclick="openNewChat()">✏️ Start New Chat</button>
+      </div>
+      <div id="activeChatView" style="display:none;height:100%;flex-direction:column">
+        <!-- Chat header -->
+        <div class="messenger-chat-header" id="chatHeader">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="chat-avatar" id="chatAvatar">?</div>
+            <div>
+              <div style="font-weight:700;font-size:0.95rem" id="chatPartnerName">—</div>
+              <div style="font-size:0.72rem;color:var(--muted-text)" id="chatPartnerRole">—</div>
+            </div>
+          </div>
+          <button class="secondary-btn" style="padding:4px 10px;font-size:0.78rem" onclick="deleteConversation()">🗑️</button>
+        </div>
+        <!-- Messages area -->
+        <div class="messenger-messages" id="chatMessages"></div>
+        <!-- Input area -->
+        <div class="messenger-input-area">
+          <textarea id="chatInput" rows="1" placeholder="Type a message..." onkeydown="handleChatKey(event)" oninput="autoGrowChat(this)"></textarea>
+          <button class="messenger-send-btn" onclick="sendChatMessage()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settings" class="section">
+  <h3 style="margin-bottom:20px;font-size:1.4rem;color:var(--text);display:flex;align-items:center;gap:10px">⚙️ Settings</h3>
+
+  <!-- Account Settings -->
+  <div class="card settings-card">
+    <div class="settings-card-header">
+      <span class="settings-card-icon">👤</span>
+      <div>
+        <h4 class="settings-card-title">Account</h4>
+        <p class="settings-card-desc">Manage your profile and password</p>
+      </div>
+    </div>
+    <div class="settings-card-body">
+      <div class="settings-row">
+        <label class="settings-label">Username</label>
+        <div class="settings-value" id="settingsUsername">—</div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label">Role</label>
+        <div class="settings-value"><span id="settingsRole" class="status-badge">—</span></div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label">Access</label>
+        <div class="settings-value" id="settingsSport">—</div>
+      </div>
+      <div class="sidebar-divider" style="margin:16px 0"></div>
+      <h5 style="margin:0 0 12px;color:var(--text);font-weight:700">Change Password</h5>
+      <div class="settings-form-grid">
+        <div>
+          <label class="settings-label">Current Password</label>
+          <input type="password" id="settingsOldPass" placeholder="Current password">
+        </div>
+        <div>
+          <label class="settings-label">New Password</label>
+          <input type="password" id="settingsNewPass" placeholder="New password">
+        </div>
+        <div>
+          <label class="settings-label">Confirm New Password</label>
+          <input type="password" id="settingsConfirmPass" placeholder="Confirm new password">
+        </div>
+      </div>
+      <button class="form-btn" onclick="changePassword()" style="margin-top:12px">🔒 Update Password</button>
+    </div>
+  </div>
+
+  <!-- Appearance -->
+  <div class="card settings-card">
+    <div class="settings-card-header">
+      <span class="settings-card-icon">🎨</span>
+      <div>
+        <h4 class="settings-card-title">Appearance</h4>
+        <p class="settings-card-desc">Customize how the app looks</p>
+      </div>
+    </div>
+    <div class="settings-card-body">
+      <div class="settings-row" style="cursor:pointer" onclick="toggleDarkMode()">
+        <label class="settings-label" style="cursor:pointer">🌙 Dark Mode</label>
+        <div class="settings-toggle-wrap">
+          <div class="settings-toggle" id="settingsDarkToggle">
+            <div class="settings-toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sidebar-divider" style="margin:12px 0"></div>
+      <h5 style="margin:0 0 10px;color:var(--text);font-weight:700">🏷️ System Logo</h5>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div id="logoPreview" style="width:64px;height:64px;border-radius:16px;overflow:hidden;border:2px solid rgba(16,24,40,0.1);display:flex;align-items:center;justify-content:center;background:rgba(31,60,136,0.06);font-size:28px;flex-shrink:0">🏆</div>
+        <div>
+          <button class="form-btn secondary-btn" onclick="document.getElementById('logoFileInput').click()" style="margin:0;padding:6px 14px;font-size:0.85rem">📷 Upload Logo</button>
+          <button class="form-btn danger-btn" onclick="removeSystemLogo()" style="margin:0 0 0 6px;padding:6px 10px;font-size:0.85rem">✕</button>
+          <input type="file" id="logoFileInput" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+          <p style="font-size:0.75rem;color:var(--muted-text);margin:6px 0 0">PNG, JPG or SVG. Max 200KB. Appears on sidebar &amp; login.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Management (Admin only) -->
+  <div class="card settings-card" id="settingsDataCard">
+    <div class="settings-card-header">
+      <span class="settings-card-icon">🗄️</span>
+      <div>
+        <h4 class="settings-card-title">Data Management</h4>
+        <p class="settings-card-desc">Export, import, and backup your data</p>
+      </div>
+    </div>
+    <div class="settings-card-body">
+      <div style="display:flex;flex-wrap:wrap;gap:10px">
+        <button class="form-btn accent-btn" onclick="exportAllData()">📤 Export Data (JSON)</button>
+        <button class="form-btn secondary-btn" onclick="document.getElementById('importFileInput').click()">📥 Import Data (JSON)</button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importAllData(event)">
+        <button class="form-btn" onclick="backupToFile()">💾 Backup to File</button>
+      </div>
+      <div class="sidebar-divider" style="margin:16px 0"></div>
+      <button class="form-btn danger-btn" onclick="clearAllData()">🗑️ Clear All Data</button>
+    </div>
+  </div>
+
+  <!-- Admin Panel (Admin only) -->
+  <div class="card settings-card" id="settingsAdminCard">
+    <div class="settings-card-header">
+      <span class="settings-card-icon">🛡️</span>
+      <div>
+        <h4 class="settings-card-title">Admin Panel</h4>
+        <p class="settings-card-desc">System administration options</p>
+      </div>
+    </div>
+    <div class="settings-card-body">
+      <div class="settings-row" style="cursor:pointer" onclick="show('users')">
+        <label class="settings-label" style="cursor:pointer">👤 Manage Users</label>
+        <span style="color:var(--muted-text);font-size:1.2rem">›</span>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label">📊 Total Tournaments</label>
+        <div class="settings-value" id="settingsTotalTournaments">0</div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label">👥 Total Teams</label>
+        <div class="settings-value" id="settingsTotalTeams">0</div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label">👤 Total Users</label>
+        <div class="settings-value" id="settingsTotalUsers">0</div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label">💾 Storage Used</label>
+        <div class="settings-value" id="settingsStorageUsed">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Logout -->
+  <div class="card settings-card">
+    <div class="settings-card-body" style="text-align:center;padding:20px">
+      <button class="form-btn danger-btn" onclick="logout()" style="padding:12px 32px;font-size:1rem;border-radius:10px;display:inline-flex;align-items:center;gap:8px">
+        🚪 Logout
+      </button>
+      <p style="font-size:0.8rem;color:var(--muted-text);margin-top:8px">Sign out of your account</p>
+    </div>
+  </div>
+
+  <!-- About -->
+  <div class="card settings-card">
+    <div class="settings-card-header">
+      <span class="settings-card-icon">ℹ️</span>
+      <div>
+        <h4 class="settings-card-title">About</h4>
+        <p class="settings-card-desc">System information</p>
+      </div>
+    </div>
+    <div class="settings-card-body">
+      <div class="settings-row">
+        <label class="settings-label">App Name</label>
+        <div class="settings-value">SportsSys</div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label">Version</label>
+        <div class="settings-value">1.0.0</div>
+      </div>
+      <div class="settings-row">
+        <label class="settings-label">Description</label>
+        <div class="settings-value" style="max-width:300px">Web-Based Sports Event & Tournament Management System</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// Global variables
+let currentUser = null;
+let selectedSport = null;
+let isViewOnly = false;
+// g() and s() are defined in db-bridge.js (database-connected)
+
+// UI helpers
+function toggleUserMenu(){
+  const m = document.getElementById('userMenu');
+  if(!m) return;
+  m.style.display = m.style.display === 'block' ? 'none' : 'block';
+}
+
+// Mobile sidebar toggle
+function toggleSidebar(){
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  if(!sidebar) return;
+  const isOpen = sidebar.classList.contains('open');
+  sidebar.classList.toggle('open');
+  if(overlay) overlay.style.display = isOpen ? 'none' : 'block';
+}
+// Close sidebar when a nav button is clicked (mobile/tablet)
+document.addEventListener('click', function(e){
+  if(window.innerWidth <= 1000 && e.target.closest('.sidebar button:not(.danger-btn)')){
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if(sidebar) sidebar.classList.remove('open');
+    if(overlay) overlay.style.display = 'none';
+  }
+});
+document.addEventListener('click', (e)=>{
+  const btn = document.getElementById('userMenuBtn');
+  const menu = document.getElementById('userMenu');
+  if(!menu) return;
+  if(btn && btn.contains(e.target)) return;
+  if(!menu.contains(e.target)) menu.style.display = 'none';
+});
+
+function globalSearch(q){
+  const dropdown = document.getElementById('globalSearchResults');
+  if(!dropdown) return;
+  q = (q||'').trim().toLowerCase();
+  if(q.length < 2){ dropdown.style.display='none'; return; }
+
+  const results = [];
+  const MAX = 5; // max per category
+
+  // Search Tournaments
+  const tournaments = typeof getVisibleTournaments === 'function' ? getVisibleTournaments() : (g('tournaments') || []);
+  tournaments.forEach((t,i) => {
+    if(results.filter(r=>r.cat==='Tournaments').length >= MAX) return;
+    const txt = [t.name, t.sport, t.format].join(' ').toLowerCase();
+    if(txt.includes(q)) results.push({cat:'Tournaments', icon:'🏅', label:t.name, sub:t.sport+' • '+({single:'Single Elim',double:'Double Elim',roundrobin:'Round Robin',groupknockout:'Group+KO'}[t.format]||t.format), section:'tournaments'});
+  });
+
+  // Search Teams
+  const teams = typeof getVisibleTeams === 'function' ? getVisibleTeams() : (g('teams') || []);
+  teams.forEach(t => {
+    if(results.filter(r=>r.cat==='Teams').length >= MAX) return;
+    const pNames = (t.players||[]).map(p=>p.name||'').join(' ').toLowerCase();
+    const txt = [t.name, t.sport, t.group||'', pNames].join(' ').toLowerCase();
+    if(txt.includes(q)) results.push({cat:'Teams', icon:'👥', label:t.name, sub:(t.sport||'')+(t.group?' • '+t.group:'')+(t.players?' • '+t.players.length+' players':''), section:'teams'});
+  });
+
+  // Search Users
+  const users = typeof getVisibleUsers === 'function' ? getVisibleUsers() : (g('users') || []);
+  users.forEach(u => {
+    if(results.filter(r=>r.cat==='Users').length >= MAX) return;
+    const txt = [u.username, u.role, u.sport||''].join(' ').toLowerCase();
+    if(txt.includes(q)) results.push({cat:'Users', icon:'👤', label:u.username, sub:u.role+(u.sport?' • '+u.sport:''), section:'users'});
+  });
+
+  // Search Schedules
+  const matches = typeof getVisibleMatches === 'function' ? getVisibleMatches() : (g('matches') || []);
+  matches.forEach(m => {
+    if(results.filter(r=>r.cat==='Schedules').length >= MAX) return;
+    const aName = (teams.find(t=>t.id===m.a)||{}).name || m.a || '';
+    const bName = (teams.find(t=>t.id===m.b)||{}).name || m.b || '';
+    const txt = [aName, bName, m.court||'', m.date||''].join(' ').toLowerCase();
+    if(txt.includes(q)) results.push({cat:'Schedules', icon:'📅', label:aName+' vs '+bName, sub:(m.date||'')+(m.court?' • '+m.court:''), section:'schedules'});
+  });
+
+  // Search Big Events
+  const bigEvents = typeof getVisibleBigEvents === 'function' ? getVisibleBigEvents() : (g('bigEvents') || []);
+  bigEvents.forEach(ev => {
+    if(results.filter(r=>r.cat==='Big Events').length >= MAX) return;
+    const txt = [ev.name, ...(ev.sports||[]), ...(ev.units||[])].join(' ').toLowerCase();
+    if(txt.includes(q)) results.push({cat:'Big Events', icon:'🏆', label:ev.name, sub:(ev.sports||[]).length+' sports • '+(ev.units||[]).length+' units', section:'tournaments'});
+  });
+
+  if(results.length === 0){
+    dropdown.innerHTML = '<div class="gsr-empty">No results for "'+q.replace(/</g,'&lt;')+'"</div>';
+    dropdown.style.display = 'block';
+    return;
+  }
+
+  // Group by category
+  let html = '';
+  let lastCat = '';
+  results.forEach(r => {
+    if(r.cat !== lastCat){
+      html += '<div class="gsr-cat">'+r.icon+' '+r.cat+'</div>';
+      lastCat = r.cat;
+    }
+    html += '<div class="gsr-item" onclick="globalSearchGo(\''+r.section+'\');document.getElementById(\'globalSearchResults\').style.display=\'none\';document.getElementById(\'globalSearch\').value=\'\'">';
+    html += '<div class="gsr-label">'+r.label+'</div>';
+    html += '<div class="gsr-sub">'+r.sub+'</div>';
+    html += '</div>';
+  });
+  dropdown.innerHTML = html;
+  dropdown.style.display = 'block';
+}
+
+function globalSearchGo(section){
+  if(typeof show === 'function') show(section);
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(e){
+  const dd = document.getElementById('globalSearchResults');
+  const inp = document.getElementById('globalSearch');
+  if(dd && !dd.contains(e.target) && e.target !== inp) dd.style.display = 'none';
+});
+</script>
+
+<script src="js/db-bridge.js?v=2"></script>
+<script src="js/utils.js?v=8"></script>
+<script src="js/auth.js?v=15"></script>
+<script src="js/dashboard.js?v=3"></script>
+<script src="js/users.js?v=4"></script>
+<script src="js/teams.js?v=5"></script>
+<script src="js/tournaments.js?v=4"></script>
+<script src="js/schedules.js?v=7"></script>
+<script src="js/bracketing.js?v=9"></script>
+<script src="js/standings.js?v=4"></script>
+<script src="js/announcements.js?v=2"></script>
+<script src="js/data-management.js?v=2"></script>
+<script src="js/big-events.js?v=5"></script>
+<script src="js/messages.js?v=2"></script>
+<script src="js/app.js?v=10"></script>
+
+<!-- Auto-winner toast (shows when a winner was auto-assigned from scores) -->
+<div id="autoToast" class="auto-toast" style="display:none">
+  <div class="auto-toast-message">Winner auto-assigned</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button id="undoAutoBtn" class="form-btn secondary-btn" onclick="undoLastAutoWinner()">Undo</button>
+    <button id="dismissAutoBtn" class="form-btn" onclick="dismissAutoToast()">Dismiss</button>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="resp-modal" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:480px; max-width:94vw; max-height:90vh; overflow-y:auto; background:var(--surface); border:1px solid rgba(16,24,40,0.06); box-shadow:0 12px 36px rgba(16,24,40,0.12); padding:24px; border-radius:12px; z-index:9999">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="font-weight:700;font-size:1.15rem;display:flex;align-items:center;gap:8px">✏️ Edit User</div>
+    <button onclick="closeEditUser()" class="secondary-btn" style="padding:6px 12px">Close</button>
+  </div>
+  <input type="hidden" id="editUserIndex">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Username</label>
+  <input id="editUserName" placeholder="Username" style="width:100%">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:10px;margin-bottom:4px">Password <span style="font-weight:400;color:var(--muted-text);font-size:0.8rem">(leave blank to keep current)</span></label>
+  <input id="editUserPass" type="password" placeholder="New password (optional)" style="width:100%">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:10px;margin-bottom:4px">Role</label>
+  <select id="editUserRole" onchange="toggleEditOrgSports()" style="width:100%">
+    <option value="admin">Sports Coordinator (Admin)</option>
+    <option value="organizer">Organizer</option>
+  </select>
+  <div id="editCampusDiv">
+    <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:10px;margin-bottom:4px">Campus</label>
+    <select id="editUserCampus" class="campus-select" style="width:100%">
+      <option value="">Select Campus</option>
+    </select>
+  </div>
+  <div id="editOrgSportsDiv" style="display:none;margin-top:8px">
+    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Assigned Sports</label>
+    <div id="editOrgSportsContainer" style="display:flex;flex-wrap:wrap"></div>
+  </div>
+  <div id="editOrgEventsDiv" style="display:none;margin-top:8px">
+    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Assigned Events</label>
+    <div id="editOrgEventsContainer" style="display:flex;flex-wrap:wrap"></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+    <button class="form-btn secondary-btn" onclick="closeEditUser()">Cancel</button>
+    <button class="form-btn" onclick="saveEditUser()">💾 Save Changes</button>
+  </div>
+</div>
+
+<datalist id="campusOptions"></datalist>
+
+<!-- Edit Tournament Modal -->
+<!-- Edit Tournament Modal -->
+<div id="editTournamentModal" class="resp-modal" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:580px; max-width:96vw; background:var(--surface); border:1px solid rgba(16,24,40,0.06); box-shadow:0 12px 36px rgba(16,24,40,0.12); padding:20px; border-radius:12px; z-index:9999">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-weight:700;font-size:1.1rem">Edit Tournament</div>
+    <button onclick="closeEditTournament()" class="secondary-btn">Close</button>
+  </div>
+  <input type="hidden" id="editTournamentIdx">
+  <div style="max-height:65vh;overflow-y:auto;padding-right:4px">
+    <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Tournament Name</label>
+    <input id="editTournamentName" placeholder="Tournament Name" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box">
+    <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:10px;margin-bottom:4px">Format</label>
+    <select id="editTournamentFormat" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px">
+      <option value="single">Single Elimination</option>
+      <option value="double">Double Elimination</option>
+      <option value="roundrobin">Round Robin</option>
+      <option value="groupknockout">Group + Knockout</option>
+    </select>
+    <div style="display:flex;gap:16px;margin-top:10px;align-items:center">
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem"><input type="checkbox" id="editTournamentAutoSeed"> Auto-seed</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem">Best-of: <select id="editTournamentBestOf" style="width:72px;margin-left:6px"><option value="1">1</option><option value="3">3</option><option value="5">5</option></select></label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <div style="flex:1">
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Start Date</label>
+        <input id="editTournamentStart" type="date" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box">
+      </div>
+      <div style="flex:1">
+        <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">End Date</label>
+        <input id="editTournamentEnd" type="date" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;box-sizing:border-box">
+      </div>
+    </div>
+    <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:10px;margin-bottom:4px">Status</label>
+    <select id="editTournamentStatus" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px">
+      <option value="upcoming">Upcoming</option>
+      <option value="ongoing">Ongoing</option>
+      <option value="completed">Completed</option>
+    </select>
+    <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:10px;margin-bottom:4px">Teams</label>
+    <div id="editTournamentTeams"></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+    <button class="form-btn secondary-btn" onclick="closeEditTournament()">Cancel</button>
+    <button class="form-btn" onclick="saveEditTournament()">💾 Save Changes</button>
+  </div>
+</div>
+
+<!-- Edit Team Modal (existing) -->
+<div id="editTeamModal" class="resp-modal" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:420px; max-width:94vw; background:var(--surface); border:1px solid rgba(16,24,40,0.06); box-shadow:0 12px 36px rgba(16,24,40,0.12); padding:20px; border-radius:12px; z-index:9999">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-weight:700;font-size:1.1rem">Edit Team</div>
+    <button onclick="closeEditTeam()" class="secondary-btn">Close</button>
+  </div>
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Team Logo <span style="font-weight:400;color:var(--muted-text);font-size:0.78rem">(optional)</span></label>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+    <div id="editTeamLogoPreview" style="width:48px;height:48px;border-radius:8px;border:2px dashed #ddd;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f8f9fa;flex-shrink:0">
+      <span style="font-size:0.7rem;color:#aaa">No logo</span>
+    </div>
+    <div style="flex:1">
+      <input type="file" id="editTeamLogoFile" accept="image/*" onchange="previewEditTeamLogo(this)" style="width:100%;font-size:0.82rem">
+      <button type="button" class="secondary-btn" onclick="clearEditTeamLogo()" style="margin-top:4px;font-size:0.75rem;padding:2px 8px">Remove Logo</button>
+    </div>
+  </div>
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Team Name</label>
+  <input id="editTeamName" placeholder="Team Name" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:8px;margin-bottom:4px">Group</label>
+  <input id="editTeamGroup" placeholder="Group Name" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:8px;margin-bottom:4px">Tournament</label>
+  <select id="editTeamTournament" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px"><option value="">No Tournament</option></select>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+    <button class="form-btn" onclick="saveEditTeam()">Save Changes</button>
+  </div>
+</div>
+
+<!-- Edit Player Modal -->
+<div id="editPlayerModal" class="resp-modal" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:420px; max-width:94vw; background:var(--surface); border:1px solid rgba(16,24,40,0.06); box-shadow:0 12px 36px rgba(16,24,40,0.12); padding:20px; border-radius:12px; z-index:9999">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-weight:700;font-size:1.1rem">Edit Player</div>
+    <button onclick="closeEditPlayer()" class="secondary-btn">Close</button>
+  </div>
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Player Name</label>
+  <input id="editPlayerName" placeholder="Player Name" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:8px;margin-bottom:4px">Team</label>
+  <select id="editPlayerTeam" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px"></select>
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-top:8px;margin-bottom:4px">Position</label>
+  <select id="editPlayerPosition" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px"></select>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+    <button class="form-btn" onclick="saveEditPlayer()">Save Changes</button>
+  </div>
+</div>
+
+<!-- Lineup editor modal (simple inline panel) -->
+<div id="lineupEditor" class="resp-modal" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:520px; max-width:94vw; background:var(--surface); border:1px solid rgba(16,24,40,0.06); box-shadow:0 12px 36px rgba(16,24,40,0.12); padding:16px; border-radius:12px; z-index:9999; max-height:90vh; overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div style="font-weight:700">Edit Match Lineup</div>
+    <button onclick="closeLineupEditor()" class="secondary-btn">Close</button>
+  </div>
+  <div id="lineupEditorBody"></div>
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
+    <button class="form-btn" onclick="saveMatchLineup()">Save Lineup</button>
+  </div>
+</div>
+
+<!-- Reschedule Match Modal -->
+<div id="rescheduleModal" class="resp-modal" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:440px; max-width:94vw; background:var(--surface); border:1px solid rgba(16,24,40,0.06); box-shadow:0 12px 36px rgba(16,24,40,0.12); padding:20px; border-radius:12px; z-index:9999">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:8px">📅 Reschedule Match</div>
+    <button onclick="closeReschedule()" class="secondary-btn" style="padding:6px 12px">Close</button>
+  </div>
+  <input type="hidden" id="rescheduleIdx">
+  <div id="rescheduleMatchInfo" style="padding:10px;background:var(--bg);border-radius:8px;margin-bottom:12px;font-size:0.88rem;font-weight:600;text-align:center"></div>
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">New Date</label>
+  <input id="rescheduleDate" type="date" style="width:100%;margin-bottom:8px">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">New Start Time</label>
+  <div style="display:flex;gap:6px;margin-bottom:8px">
+    <select id="rescheduleHour" style="flex:1">
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+      <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+      <option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+    </select>
+    <select id="rescheduleMinute" style="flex:1">
+      <option value="00">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option>
+    </select>
+    <select id="rescheduleAMPM" style="flex:1">
+      <option value="AM">AM</option><option value="PM">PM</option>
+    </select>
+  </div>
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">New Court / Venue</label>
+  <input id="rescheduleCourt" placeholder="e.g. Court 2" style="width:100%;margin-bottom:8px">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Reason (optional)</label>
+  <input id="rescheduleReason" placeholder="e.g. Rain delay, venue conflict" style="width:100%">
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+    <button class="form-btn secondary-btn" onclick="closeReschedule()">Cancel</button>
+    <button class="form-btn" onclick="saveReschedule()">💾 Reschedule</button>
+  </div>
+</div>
+
+<!-- Edit Campus Modal -->
+<div id="editCampusModal" class="resp-modal" style="display:none; position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); width:400px; max-width:94vw; background:var(--surface); border:1px solid rgba(16,24,40,0.06); box-shadow:0 12px 36px rgba(16,24,40,0.12); padding:20px; border-radius:12px; z-index:9999">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:8px">🏫 Edit Campus Name</div>
+    <button onclick="closeEditCampusModal()" class="secondary-btn" style="padding:6px 12px">✕</button>
+  </div>
+  <input type="hidden" id="editCampusOldName">
+  <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px">Campus Name</label>
+  <input id="editCampusNewName" type="text" placeholder="Enter new campus name" style="width:100%;margin-bottom:8px">
+  <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+    <button class="form-btn secondary-btn" onclick="closeEditCampusModal()">Cancel</button>
+    <button class="form-btn" onclick="saveEditCampus()">💾 Save Changes</button>
+  </div>
+</div>
+
+</body>
+</html>

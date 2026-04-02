@@ -1,0 +1,1070 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SportsSys - Live Viewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f1117">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--surface-2:#22252f;--muted:#2a2d38;
+  --primary:#4f7cdb;--primary-glow:rgba(79,124,219,0.15);--accent:#22b8cf;
+  --success:#34d058;--danger:#f85149;--muted-text:#8b949e;
+  --text:#e6edf3;--radius:16px;
+  --shadow-1:0 8px 32px rgba(0,0,0,0.25);
+  --shadow-2:0 12px 48px rgba(0,0,0,0.35);
+  --border-color:rgba(255,255,255,0.06);
+  --glass:rgba(255,255,255,0.03);
+}
+body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh}
+
+/* WELCOME SCREEN */
+.welcome-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;position:relative;overflow:hidden}
+.welcome-gradient-left{position:absolute;top:-30%;left:-20%;width:60%;height:60%;background:radial-gradient(circle,rgba(79,124,219,0.12) 0%,transparent 70%);pointer-events:none;animation:floatLeft 20s ease-in-out infinite}
+.welcome-gradient-right{position:absolute;bottom:-20%;right:-15%;width:50%;height:50%;background:radial-gradient(circle,rgba(34,184,207,0.1) 0%,transparent 70%);pointer-events:none;animation:floatRight 18s ease-in-out infinite}
+@keyframes floatLeft{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,30px)}}
+@keyframes floatRight{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,-30px)}}
+.welcome-content{text-align:center;position:relative;z-index:10;max-width:600px;margin:0 auto}
+.welcome-icon{font-size:clamp(4rem,12vw,6rem);margin-bottom:20px;filter:drop-shadow(0 8px 24px rgba(0,0,0,0.3));animation:bounceIn 1s ease}
+@keyframes bounceIn{0%{opacity:0;transform:scale(0.3)}50%{opacity:1;transform:scale(1.05)}70%{transform:scale(0.9)}100%{transform:scale(1)}}
+.welcome-title{font-size:clamp(2.5rem,8vw,4.5rem);font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:12px;animation:slideUp 0.8s ease 0.2s both}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.welcome-subtitle{color:var(--muted-text);font-size:clamp(1rem,3vw,1.3rem);margin-bottom:40px;animation:slideUp 0.8s ease 0.4s both}
+.welcome-btn{padding:16px 48px;border-radius:999px;border:2px solid var(--primary);background:var(--primary);color:#fff;font-weight:700;font-size:1.1rem;cursor:pointer;transition:all 0.3s;position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:12px;animation:slideUp 0.8s ease 0.6s both;box-shadow:0 8px 24px rgba(79,124,219,0.3)}
+.welcome-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.2),transparent);opacity:0;transition:opacity 0.3s}
+.welcome-btn:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(79,124,219,0.4);border-color:var(--accent)}
+.welcome-btn:hover::before{opacity:1}
+.welcome-btn:active{transform:translateY(-2px) scale(0.98)}
+.welcome-btn-arrow{font-size:1.3rem;transition:transform 0.3s}
+.welcome-btn:hover .welcome-btn-arrow{transform:translateX(4px)}
+
+/* SPORT SELECTION LANDING */
+.sport-select-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;position:relative;overflow:hidden}
+.sport-select-screen::before{content:'';position:absolute;top:-30%;left:-20%;width:60%;height:60%;background:radial-gradient(circle,rgba(79,124,219,0.08) 0%,transparent 70%);pointer-events:none}
+.sport-select-screen::after{content:'';position:absolute;bottom:-20%;right:-15%;width:50%;height:50%;background:radial-gradient(circle,rgba(34,184,207,0.06) 0%,transparent 70%);pointer-events:none}
+.sport-select-title{font-size:clamp(1.8rem,5vw,3rem);font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;text-align:center;position:relative;z-index:1}
+.sport-select-sub{color:var(--muted-text);font-size:clamp(0.85rem,2vw,1.05rem);margin-bottom:40px;text-align:center;position:relative;z-index:1}
+.sport-carousel-wrap{position:relative;width:100%;max-width:1100px;z-index:1}
+.sport-carousel{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px 10px;justify-items:center;width:100%}
+.sport-card{width:100%;max-width:280px;background:var(--surface);border:1px solid var(--border-color);border-radius:20px;padding:36px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}
+.sport-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(79,124,219,0.06),transparent);opacity:0;transition:opacity 0.3s}
+.sport-card:hover{transform:translateY(-8px);border-color:rgba(79,124,219,0.3);box-shadow:0 20px 60px rgba(79,124,219,0.15)}
+.sport-card:hover::before{opacity:1}
+.sport-card:active{transform:translateY(-4px) scale(0.98)}
+.sport-card-icon{font-size:3.2rem;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.3));position:relative;z-index:1;transition:transform 0.3s}
+.sport-card:hover .sport-card-icon{transform:scale(1.15)}
+.sport-card-name{font-weight:700;font-size:1rem;color:var(--text);position:relative;z-index:1;text-align:center}
+.sport-card-count{font-size:0.72rem;color:var(--muted-text);font-weight:500;position:relative;z-index:1}
+.carousel-btn{display:none}
+.sport-all-btn{margin-top:24px;padding:12px 32px;border-radius:999px;border:1px solid var(--border-color);background:var(--surface);color:var(--text);font-weight:600;font-size:0.9rem;cursor:pointer;transition:all 0.2s;position:relative;z-index:1}
+.sport-all-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* MAIN APP */
+.main-app{display:none;min-height:100vh}
+.header{background:var(--surface);border-bottom:1px solid var(--border-color);padding:12px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.header-back{width:40px;height:40px;border-radius:12px;background:var(--glass);border:1px solid var(--border-color);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.1rem;color:var(--text);transition:all 0.15s;flex-shrink:0}
+.header-back:hover{background:var(--primary);color:#fff;border-color:var(--primary)}
+.header-info{flex:1;min-width:0}
+.header-info h1{font-size:1.1rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-info .sub{font-size:0.72rem;color:var(--muted-text)}
+.header-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.live-pill{display:flex;align-items:center;gap:5px;padding:5px 12px;background:rgba(248,81,73,0.12);border-radius:999px;font-size:0.72rem;font-weight:700;color:#ff6b6b}
+.live-dot{width:7px;height:7px;background:#ff4444;border-radius:50%;animation:pulse 1.5s ease infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.85)}}
+.header-logo{width:38px;height:38px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid var(--border-color)}
+.header-logo img{width:100%;height:100%;object-fit:cover}
+
+/* Tabs */
+.tabs{display:flex;gap:6px;padding:12px 20px;background:var(--bg);overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border-color)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:8px 20px;border-radius:999px;border:none;background:transparent;color:var(--muted-text);font-weight:600;font-size:0.82rem;cursor:pointer;transition:all 0.15s;white-space:nowrap;flex-shrink:0}
+.tab:hover{color:var(--text);background:var(--glass)}
+.tab.active{background:var(--primary);color:#fff}
+
+.container{max-width:900px;margin:0 auto;padding:16px 20px}
+.section{display:none}
+.section.active{display:block}
+
+/* LIVE SCORE CARDS */
+.live-match-card{background:var(--surface);border:1px solid var(--border-color);border-radius:20px;padding:0;overflow:hidden;margin-bottom:16px;transition:all 0.2s}
+.live-match-card:hover{box-shadow:var(--shadow-1);border-color:rgba(255,255,255,0.1)}
+.live-match-card.is-live{border-color:rgba(248,81,73,0.25);box-shadow:0 0 30px rgba(248,81,73,0.06)}
+.lmc-meta{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;font-size:0.7rem;color:var(--muted-text);font-weight:500}
+.lmc-status{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:700;text-transform:uppercase}
+.lmc-status.live{background:rgba(248,81,73,0.12);color:#ff6b6b}
+.lmc-status.scheduled{background:rgba(79,124,219,0.12);color:var(--primary)}
+.lmc-status.completed{background:rgba(52,208,88,0.12);color:var(--success)}
+.lmc-body{display:flex;align-items:center;padding:8px 20px 16px;gap:12px}
+.lmc-team{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.lmc-team-logo{width:48px;height:48px;border-radius:14px;object-fit:cover;border:2px solid var(--border-color);flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.lmc-team-initial{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.1rem;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.lmc-team-name{font-weight:700;font-size:0.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.lmc-center{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;min-width:80px}
+.lmc-time-badge{padding:3px 12px;border-radius:999px;background:var(--surface-2);border:1px solid var(--border-color);font-size:0.72rem;font-weight:600;color:var(--muted-text)}
+.lmc-score{font-size:1.8rem;font-weight:900;letter-spacing:2px;color:var(--text)}
+.lmc-score.live-glow{color:#ff6b6b;text-shadow:0 0 20px rgba(248,81,73,0.3)}
+.lmc-location{padding:8px 16px;border-top:1px solid var(--border-color);text-align:center;font-size:0.7rem;color:var(--muted-text);display:flex;align-items:center;justify-content:center;gap:6px}
+.lmc-tournament-badge{font-size:0.68rem;font-weight:600;color:var(--primary);background:var(--primary-glow);padding:2px 8px;border-radius:4px}
+.lmc-timer{font-size:0.72rem;font-weight:600;color:var(--muted-text)}
+.lmc-periods{padding:0 16px 8px}
+.lmc-period-table{width:100%;border-collapse:collapse;font-size:0.75rem}
+.lmc-period-table th{text-align:center;padding:4px 8px;font-weight:700;color:var(--muted-text);font-size:0.68rem;text-transform:uppercase;border-bottom:1px solid var(--border-color)}
+.lmc-period-table th:first-child{text-align:left}
+.lmc-period-table td{text-align:center;padding:4px 8px;font-weight:600;border-bottom:1px solid rgba(128,128,128,0.08)}
+.lmc-period-table td:first-child{text-align:left;color:var(--muted-text);font-weight:500}
+.lmc-period-table td.leading{color:#22c55e;font-weight:800}
+.lmc-feed{display:flex;gap:6px;flex-wrap:wrap;padding:4px 16px 8px;font-size:0.7rem}
+.lmc-feed .feed-a{background:rgba(28,43,74,0.1);color:#1c2b4a;padding:2px 8px;border-radius:6px;font-weight:600}
+.lmc-feed .feed-b{background:rgba(34,197,94,0.1);color:#22c55e;padding:2px 8px;border-radius:6px;font-weight:600}
+[data-theme="dark"] .lmc-feed .feed-a{background:rgba(123,164,255,0.15);color:#7ba4ff}
+
+/* Schedule */
+.schedule-date-header{font-weight:700;font-size:0.88rem;color:var(--primary);padding:14px 0 8px;display:flex;align-items:center;gap:8px}
+.schedule-date-header::after{content:'';flex:1;height:1px;background:var(--border-color)}
+
+/* Bracket viewer */
+.bracket-tournament-card{background:var(--surface);border:1px solid var(--border-color);border-radius:20px;overflow:hidden;margin-bottom:20px}
+.btc-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;border-bottom:1px solid var(--border-color)}
+.btc-title{font-weight:800;font-size:1rem}
+.btc-format{font-size:0.72rem;padding:4px 10px;border-radius:6px;background:var(--primary-glow);color:var(--primary);font-weight:600}
+.btc-champion{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:6px;background:linear-gradient(135deg,rgba(253,224,71,0.15),rgba(250,204,21,0.08));color:#fde047;font-weight:700;font-size:0.78rem}
+.btc-body{padding:16px;overflow-x:auto}
+.btc-section-label{font-size:0.78rem;font-weight:700;color:var(--muted-text);text-transform:uppercase;letter-spacing:0.5px;padding:8px 0;display:flex;align-items:center;gap:6px}
+
+.v-bracket-wrapper{overflow-x:auto;padding:16px 8px;-webkit-overflow-scrolling:touch}
+.v-bracket-canvas{position:relative;user-select:none}
+.v-match-box{position:absolute;background:var(--surface-2);border:1px solid var(--border-color);border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.15);overflow:hidden}
+.v-seed{display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:0.78rem;font-weight:500;color:var(--text);border-bottom:1px solid rgba(255,255,255,0.04)}
+.v-seed:last-child{border-bottom:none}
+.v-seed.winner{background:rgba(52,208,88,0.1);color:#6ee7a0;font-weight:700}
+.v-seed.loser{background:rgba(248,81,73,0.06);color:#f87171;opacity:0.65}
+.v-seed.tbd{color:var(--muted-text);font-style:italic}
+.v-seed-logo{width:20px;height:20px;border-radius:5px;object-fit:cover;flex-shrink:0}
+.v-seed-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v-seed-score{margin-left:auto;font-weight:800;font-size:0.75rem;background:rgba(79,124,219,0.15);color:var(--primary);padding:1px 6px;border-radius:4px}
+.v-seed-score.win{background:rgba(52,208,88,0.15);color:var(--success)}
+.v-final-score{text-align:center;font-size:0.7rem;font-weight:700;color:var(--primary);background:var(--primary-glow);padding:3px 0}
+.v-round-label{position:absolute;top:0;text-align:center;font-weight:700;font-size:0.68rem;color:var(--primary);text-transform:uppercase;letter-spacing:0.5px;background:var(--primary-glow);padding:4px 10px;border-radius:6px}
+.v-bc-h{position:absolute;height:2px;background:rgba(79,124,219,0.3);pointer-events:none}
+.v-bc-v{position:absolute;width:2px;background:rgba(79,124,219,0.3);pointer-events:none}
+.v-champion{position:absolute;background:linear-gradient(135deg,rgba(253,224,71,0.15),rgba(250,204,21,0.1));border:2px solid rgba(234,179,8,0.4);padding:12px 20px;font-weight:700;font-size:0.85rem;color:#fde047;text-align:center;border-radius:10px;text-transform:uppercase;letter-spacing:0.5px;box-shadow:0 4px 16px rgba(234,179,8,0.1)}
+.v-champion.tbd{background:var(--surface-2);border-color:var(--border-color);color:var(--muted-text);box-shadow:none}
+
+/* Grand Final viewer */
+.v-grand-final{max-width:400px;margin:16px auto;padding:0;border-radius:16px;overflow:hidden;border:2px solid rgba(234,179,8,0.3);background:var(--surface)}
+.v-gf-title{padding:10px 16px;text-align:center;font-weight:800;font-size:0.82rem;color:#fde047;text-transform:uppercase;letter-spacing:1px;background:rgba(234,179,8,0.08);border-bottom:1px solid rgba(234,179,8,0.15)}
+.v-gf-slot{display:flex;align-items:center;padding:12px 16px;gap:10px}
+.v-gf-slot:first-of-type{background:rgba(234,179,8,0.04)}
+.v-gf-slot-info{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.v-gf-slot-name{font-weight:700;font-size:0.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v-gf-slot-score{font-weight:900;font-size:1.2rem;min-width:28px;text-align:center;color:#fbbf24}
+.v-gf-slot.is-winner{background:rgba(52,208,88,0.08)!important;border-left:3px solid var(--success)}
+.v-gf-slot.is-loser{opacity:0.5}
+.v-gf-divider{display:flex;align-items:center;justify-content:center;position:relative;height:0;border-top:1px solid rgba(234,179,8,0.15)}
+.v-gf-vs{position:absolute;background:rgba(217,119,6,0.8);color:#fff;font-weight:900;font-size:0.65rem;letter-spacing:1.5px;padding:2px 12px;border-radius:999px}
+.v-gf-champion{padding:10px 16px;text-align:center;font-weight:800;font-size:0.85rem;color:#fde047;background:rgba(234,179,8,0.1);border-top:1px solid rgba(234,179,8,0.15);display:flex;align-items:center;justify-content:center;gap:6px}
+
+/* RR viewer */
+.v-rr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+
+/* Results styles */
+.results-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.result-stat{background:var(--surface);border:1px solid var(--border-color);border-radius:14px;padding:16px;text-align:center}
+.result-stat-num{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-stat-label{font-size:0.72rem;color:var(--muted-text);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-top:2px}
+.result-card{background:var(--surface);border:1px solid var(--border-color);border-radius:16px;overflow:hidden;margin-bottom:12px;transition:all 0.2s}
+.result-card:hover{box-shadow:var(--shadow-1);border-color:rgba(255,255,255,0.1)}
+.result-card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;font-size:0.72rem;color:var(--muted-text);border-bottom:1px solid var(--border-color)}
+.result-card-body{display:flex;align-items:center;padding:14px 20px;gap:12px}
+.result-team{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0}
+.result-team-name{font-weight:700;font-size:0.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.result-team-name.winner{color:var(--success)}
+.result-center{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;min-width:80px}
+.result-score{font-size:1.6rem;font-weight:900;color:var(--text)}
+.result-winner-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:0.68rem;font-weight:700;background:rgba(52,208,88,0.12);color:var(--success);text-transform:uppercase}
+.result-card-footer{padding:8px 16px;border-top:1px solid var(--border-color);text-align:center;font-size:0.7rem;color:var(--muted-text);display:flex;align-items:center;justify-content:center;gap:6px}
+.result-tournament-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.result-filter-btn{padding:6px 14px;border-radius:999px;border:1px solid var(--border-color);background:var(--surface);color:var(--muted-text);font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.result-filter-btn:hover,.result-filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.v-rr-card{background:var(--surface-2);border:1px solid var(--border-color);border-radius:12px;overflow:hidden}
+.v-rr-header{padding:8px 12px;font-size:0.7rem;font-weight:700;color:var(--muted-text);text-transform:uppercase;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border-color)}
+.v-rr-team{display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:0.85rem;border-bottom:1px solid rgba(255,255,255,0.03)}
+.v-rr-team:last-child{border-bottom:none}
+.v-rr-team-name{flex:1;font-weight:500}
+.v-rr-team-name.winner{color:var(--success);font-weight:700}
+.v-rr-team-score{font-weight:800;margin-left:auto}
+.v-rr-winner{padding:6px 12px;text-align:center;font-size:0.75rem;color:var(--success);font-weight:600;background:rgba(52,208,88,0.06);display:flex;align-items:center;justify-content:center;gap:4px}
+
+.no-data{text-align:center;padding:48px 20px;color:var(--muted-text)}
+.no-data .icon{font-size:2.5rem;margin-bottom:10px;opacity:0.5}
+.no-data .msg{font-size:0.9rem}
+.refresh-bar{text-align:center;padding:12px;font-size:0.7rem;color:var(--muted-text);border-top:1px solid var(--border-color);margin-top:20px}
+
+/* Responsive */
+@media(max-width:768px){
+  .sport-carousel{grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:16px}
+  .sport-card{padding:28px 18px}
+  .sport-card-icon{font-size:2.6rem}
+  .sport-card-name{font-size:0.9rem}
+  .header{padding:10px 14px}
+  .tabs{padding:8px 14px}
+  .container{padding:12px 14px}
+  .lmc-body{padding:8px 14px 14px}
+  .lmc-team-logo,.lmc-team-initial{width:42px;height:42px;border-radius:12px}
+  .lmc-score{font-size:1.5rem}
+}
+@media(max-width:480px){
+  .sport-carousel{grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+  .sport-card{padding:24px 14px;border-radius:16px}
+  .sport-card-icon{font-size:2.2rem}
+  .sport-card-name{font-size:0.82rem}
+  .sport-select-title{margin-bottom:4px}
+  .sport-select-sub{margin-bottom:24px}
+  .header-info h1{font-size:0.95rem}
+  .tab{padding:7px 14px;font-size:0.78rem}
+  .lmc-body{padding:6px 12px 12px;gap:8px}
+  .lmc-team-logo,.lmc-team-initial{width:36px;height:36px;border-radius:10px}
+  .lmc-team-name{font-size:0.75rem}
+  .lmc-score{font-size:1.3rem;letter-spacing:1px}
+  .lmc-center{min-width:60px}
+  .lmc-time-badge{font-size:0.65rem;padding:2px 8px}
+  .v-rr-grid{grid-template-columns:1fr}
+}
+</style>
+<script>
+// Quick dark mode check from localStorage (before DB loads)
+try { if(localStorage.getItem('darkMode')==='dark') document.documentElement.setAttribute('data-theme','dark'); } catch(e) {}
+</script>
+</head>
+<body>
+
+<!-- WELCOME SCREEN -->
+<div class="welcome-screen" id="welcomeScreen" style="display:none">
+  <div class="welcome-gradient-left"></div>
+  <div class="welcome-gradient-right"></div>
+  <div class="welcome-content">
+    <div class="welcome-icon">🏆</div>
+    <h1 class="welcome-title" id="welcomeTitle">Welcome!</h1>
+    <p class="welcome-subtitle" id="welcomeSubtitle">Sports Event Viewer</p>
+    <button class="welcome-btn" onclick="proceedToSportSelection()">
+      Continue to Sports
+      <span class="welcome-btn-arrow">→</span>
+    </button>
+  </div>
+</div>
+
+<!-- SPORT SELECTION SCREEN -->
+<div class="sport-select-screen" id="sportSelectScreen">
+  <div class="sport-select-title" id="selectTitle">Select Your Sport</div>
+  <div class="sport-select-sub" id="selectSub">Choose a discipline to view live scores and brackets</div>
+  <div class="sport-carousel-wrap">
+    <button class="carousel-btn left" onclick="scrollCarousel(-1)">&#8249;</button>
+    <div class="sport-carousel" id="sportCarousel"></div>
+    <button class="carousel-btn right" onclick="scrollCarousel(1)">&#8250;</button>
+  </div>
+  <button class="sport-all-btn" onclick="selectSport(null)">View All Sports &#8594;</button>
+</div>
+
+<!-- MAIN APP -->
+<div class="main-app" id="mainApp">
+  <div class="header">
+    <div class="header-back" onclick="goBack()" title="Back to sports">&#8592;</div>
+    <div class="header-logo" id="viewerLogo"></div>
+    <div class="header-info">
+      <h1 id="viewerTitle">SportsSys</h1>
+      <div class="sub" id="viewerSub">Live Viewer</div>
+    </div>
+    <div class="header-right">
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('brackets')">&#127942; Brackets</button>
+    <button class="tab" onclick="switchTab('schedule')">&#128197; Schedule</button>
+    <button class="tab" onclick="switchTab('results')">&#127941; Results</button>
+  </div>
+
+  <div class="container">
+    <div id="sec-brackets" class="section active">
+      <div id="bracketContent"></div>
+    </div>
+    <div id="sec-schedule" class="section">
+      <div id="scheduleContent"></div>
+    </div>
+    <div id="sec-results" class="section">
+      <div id="resultsContent"></div>
+    </div>
+    <div class="refresh-bar">Auto-refreshes every 5s &#183; Last: <span id="lastRefresh">&#8212;</span></div>
+  </div>
+</div>
+
+<script>
+// Database-backed data helpers for viewer
+var _viewerCache = {};
+var _viewerApiUrl = './api/index.php';
+var _viewerDbReady = false;
+
+// g(key) — read from viewer cache (synchronous)
+var g = function(k) {
+  if (k in _viewerCache) {
+    var val = _viewerCache[k];
+    if (typeof val === 'string') { try { return JSON.parse(val); } catch(e) { return []; } }
+    if (val === null || val === undefined) return [];
+    return JSON.parse(JSON.stringify(val));
+  }
+  // Fallback to localStorage
+  try { return JSON.parse(localStorage.getItem(k) || '[]'); } catch(e) { return []; }
+};
+
+// Load all data from API into viewer cache
+function viewerLoadData() {
+  return fetch(_viewerApiUrl + '?action=load')
+    .then(function(r) { return r.json(); })
+    .then(function(result) {
+      if (result.success && result.data) {
+        for (var key in result.data) {
+          if (result.data[key] !== null && result.data[key] !== undefined) {
+            _viewerCache[key] = result.data[key];
+          }
+        }
+        _viewerDbReady = true;
+      }
+    })
+    .catch(function() {
+      // Fallback to localStorage
+      _viewerDbReady = false;
+    });
+}
+
+function getViewerFilter() {
+  var search = window.location.search.replace('?', '');
+  if (!search) return { type: 'all' };
+  if (search.indexOf('event_') === 0) return { type: 'event', id: search.replace('event_', '') };
+  if (search.indexOf('tournament_') === 0) return { type: 'tournament', index: Number(search.replace('tournament_', '')) };
+  return { type: 'all' };
+}
+var viewerFilter = getViewerFilter();
+var viewerSportFilter = null;
+
+// Sport icons mapping
+var sportIcons = {
+  Basketball:'\uD83C\uDFC0',Soccer:'\u26BD',Volleyball:'\uD83C\uDFD0',Tennis:'\uD83C\uDFBE',
+  Baseball:'\u26BE',
+  Swimming:'\uD83C\uDFCA',Athletics:'\uD83C\uDFC3',
+  TableTennis:'\uD83C\uDFD3',Badminton:'\uD83C\uDFF8',
+  Chess:'\u265F\uFE0F',Esports:'\uD83C\uDFAE'
+};
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str || '';
+  return div.innerHTML;
+}
+
+function formatTime(t) {
+  if (!t) return 'TBD';
+  var parts = t.split(':');
+  var h = parseInt(parts[0]), m = parts[1];
+  var ampm = h >= 12 ? 'PM' : 'AM';
+  return ((h % 12) || 12) + ':' + m + ' ' + ampm;
+}
+
+function isMatchLive(m) {
+  if (m.status === 'completed') return false;
+  if (!m.date || !m.time) return false;
+  var now = new Date();
+  var start = new Date(m.date + 'T' + m.time);
+  var endTime = m.endTime || m.time;
+  var end = new Date(m.date + 'T' + endTime);
+  return now >= start && now <= end;
+}
+
+function teamLogoHtml(team, size) {
+  size = size || 20;
+  if (!team) return '';
+  if (team.logo) return '<img src="' + escapeHtml(team.logo) + '" style="width:' + size + 'px;height:' + size + 'px;border-radius:' + Math.round(size/4) + 'px;object-fit:cover;flex-shrink:0">';
+  var initial = team.name ? team.name.charAt(0).toUpperCase() : '?';
+  return '<span style="width:' + size + 'px;height:' + size + 'px;border-radius:' + Math.round(size/4) + 'px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-weight:700;font-size:' + Math.round(size*0.42) + 'px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">' + initial + '</span>';
+}
+
+function getFilteredTournaments() {
+  var all = g('tournaments') || [];
+  if (viewerFilter.type === 'event') return all.filter(function(t) { return t.bigEventId === viewerFilter.id; });
+  if (viewerFilter.type === 'tournament') return all[viewerFilter.index] ? [all[viewerFilter.index]] : [];
+  return all;
+}
+
+// Sport Selection
+function buildSportCards() {
+  var tournaments = getFilteredTournaments();
+  var teams = g('teams') || [];
+  var sportsInUse = {};
+  tournaments.forEach(function(t) { if (t.sport) sportsInUse[t.sport] = (sportsInUse[t.sport] || 0) + 1; });
+  teams.forEach(function(t) { if (t.sport && !sportsInUse[t.sport]) sportsInUse[t.sport] = 0; });
+
+  var carousel = document.getElementById('sportCarousel');
+  if (!carousel) return;
+  var sportKeys = Object.keys(sportsInUse).sort();
+  if (sportKeys.length === 0) {
+    var defaults = ['Basketball','Soccer','Volleyball','Tennis','Baseball','Badminton','TableTennis','Esports'];
+    carousel.innerHTML = defaults.map(function(s) {
+      return '<div class="sport-card" onclick="selectSport(\'' + s + '\')">' +
+      '<div class="sport-card-icon">' + (sportIcons[s] || '\uD83C\uDFC5') + '</div>' +
+      '<div class="sport-card-name">' + s + '</div>' +
+      '<div class="sport-card-count">No tournaments</div></div>';
+    }).join('');
+    return;
+  }
+  carousel.innerHTML = sportKeys.map(function(s) {
+    var count = sportsInUse[s] || 0;
+    return '<div class="sport-card" onclick="selectSport(\'' + escapeHtml(s.replace(/'/g, "\\'")) + '\')">' +
+      '<div class="sport-card-icon">' + (sportIcons[s] || '\uD83C\uDFC5') + '</div>' +
+      '<div class="sport-card-name">' + escapeHtml(s) + '</div>' +
+      '<div class="sport-card-count">' + count + ' tournament' + (count !== 1 ? 's' : '') + '</div></div>';
+  }).join('');
+}
+
+function scrollCarousel(dir) {
+  var c = document.getElementById('sportCarousel');
+  if (c) c.scrollBy({ left: dir * 240, behavior: 'smooth' });
+}
+
+function selectSport(sport) {
+  viewerSportFilter = sport;
+  document.getElementById('sportSelectScreen').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+  var titleEl = document.getElementById('viewerTitle');
+  var subEl = document.getElementById('viewerSub');
+  if (sport) {
+    titleEl.textContent = sport;
+    subEl.textContent = 'Live Scores & Brackets';
+  } else {
+    titleEl.textContent = 'All Sports';
+    subEl.textContent = 'Live Scores & Brackets';
+  }
+  if (viewerFilter.type === 'event') {
+    var ev = (g('bigEvents') || []).find(function(e) { return e.id === viewerFilter.id; });
+    if (ev) {
+      titleEl.textContent = ev.name + (sport ? ' \u2014 ' + sport : '');
+      subEl.textContent = 'Tournament Viewer';
+      document.title = ev.name + ' \u2014 Viewer';
+    }
+  }
+  refreshData();
+}
+
+function goBack() {
+  if (viewerFilter.type !== 'event') {
+    history.back();
+    return;
+  }
+  document.getElementById('mainApp').style.display = 'none';
+  document.getElementById('sportSelectScreen').style.display = 'flex';
+  viewerSportFilter = null;
+  buildSportCards();
+}
+
+function proceedToSportSelection() {
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('sportSelectScreen').style.display = 'flex';
+  buildSportCards();
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  var sec = document.getElementById('sec-' + tab);
+  if (sec) sec.classList.add('active');
+  document.querySelectorAll('.tab').forEach(function(t) {
+    if (t.textContent.toLowerCase().indexOf(tab.substring(0,4)) >= 0) t.classList.add('active');
+  });
+}
+
+// Live Score Card
+function renderLiveCard(m, teams) {
+  var ta = teams.find(function(t) { return t.id == m.a; });
+  var tb = teams.find(function(t) { return t.id == m.b; });
+  var nameA = ta ? ta.name : String(m.a || 'TBD');
+  var nameB = tb ? tb.name : String(m.b || 'TBD');
+  var isLive = m.status === 'live' || (m.status !== 'completed' && isMatchLive(m));
+  var isCompleted = m.status === 'completed';
+  var statusClass = isLive ? 'live' : (isCompleted ? 'completed' : 'scheduled');
+  var statusLabel = isLive ? '<span class="live-dot"></span> LIVE' : (isCompleted ? 'FINISHED' : (m.status || 'SCHEDULED').toUpperCase());
+
+  var logoA = ta && ta.logo ? '<img class="lmc-team-logo" src="' + escapeHtml(ta.logo) + '">' : '<div class="lmc-team-initial">' + escapeHtml(nameA.charAt(0).toUpperCase()) + '</div>';
+  var logoB = tb && tb.logo ? '<img class="lmc-team-logo" src="' + escapeHtml(tb.logo) + '">' : '<div class="lmc-team-initial">' + escapeHtml(nameB.charAt(0).toUpperCase()) + '</div>';
+
+  // Look up live scoring data from bracket
+  var ld = findBracketLiveData(m.a, m.b);
+
+  var periodHtml = '';
+  if (ld && ld.periods && ld.periods.length > 0) {
+    periodHtml = '<div class="lmc-periods"><table class="lmc-period-table"><thead><tr><th></th><th>' + escapeHtml(nameA) + '</th><th>' + escapeHtml(nameB) + '</th></tr></thead><tbody>';
+    ld.periods.forEach(function(p, i) {
+      var label = (ld.config && ld.config.periodName ? ld.config.periodName : 'Period') + ' ' + (i + 1);
+      var aLead = p.scoreA > p.scoreB ? ' class="leading"' : '';
+      var bLead = p.scoreB > p.scoreA ? ' class="leading"' : '';
+      periodHtml += '<tr><td>' + escapeHtml(label) + '</td><td' + aLead + '>' + p.scoreA + '</td><td' + bLead + '>' + p.scoreB + '</td></tr>';
+    });
+    periodHtml += '</tbody></table></div>';
+  }
+
+  // Feed
+  var feedHtml = '';
+  if (ld && ld.feed && ld.feed.length > 0) {
+    feedHtml = '<div class="lmc-feed">';
+    ld.feed.slice(0, 3).forEach(function(f) {
+      var cls = f.team === 'a' ? 'feed-a' : 'feed-b';
+      var sign = f.points > 0 ? '+' + f.points : String(f.points);
+      feedHtml += '<span class="' + cls + '">' + sign + ' ' + escapeHtml(f.name) + '</span>';
+    });
+    feedHtml += '</div>';
+  }
+
+  return '<div class="live-match-card' + (isLive ? ' is-live' : '') + '">' +
+    '<div class="lmc-meta">' +
+      '<span>' + escapeHtml(m.tournament || 'Match') + '</span>' +
+      '<span class="lmc-status ' + statusClass + '">' + statusLabel + '</span>' +
+    '</div>' +
+    '<div class="lmc-body">' +
+      '<div class="lmc-team">' + logoA + '<div class="lmc-team-name">' + escapeHtml(nameA) + '</div></div>' +
+      '<div class="lmc-center">' +
+        (m.time ? '<div class="lmc-time-badge">' + formatTime(m.time) + '</div>' : '') +
+        '<div class="lmc-score' + (isLive ? ' live-glow' : '') + '">' + (m.sa || 0) + ':' + (m.sb || 0) + '</div>' +
+        (ld && ld.timerSeconds ? '<div class="lmc-timer">\u23F1 ' + formatSecondsTimer(ld.timerSeconds) + '</div>' : '') +
+      '</div>' +
+      '<div class="lmc-team">' + logoB + '<div class="lmc-team-name">' + escapeHtml(nameB) + '</div></div>' +
+    '</div>' +
+    periodHtml + feedHtml +
+    '<div class="lmc-location">' +
+      (m.sport ? '<span class="lmc-tournament-badge">' + escapeHtml(m.sport) + '</span>' : '') +
+      '\uD83D\uDCC5 ' + escapeHtml(m.date || 'TBD') + ' \u00B7 \uD83D\uDCCD ' + escapeHtml(m.court || 'TBD') +
+    '</div>' +
+  '</div>';
+}
+
+function findBracketLiveData(teamAId, teamBId) {
+  if (!teamAId || !teamBId) return null;
+  var tournaments = g('tournaments') || [];
+  for (var ti = 0; ti < tournaments.length; ti++) {
+    var t = tournaments[ti];
+    if (!t) continue;
+    // Check grand final
+    if (t.grandFinal && t.grandFinal.liveData) {
+      var gf = t.grandFinal;
+      if ((gf.a === teamAId && gf.b === teamBId) || (gf.a === teamBId && gf.b === teamAId)) return gf.liveData;
+    }
+    // Double elim
+    if (t.format === 'double' && t.bracket && t.bracket.winners) {
+      var ld = _searchBracketLiveData(t.bracket.winners, teamAId, teamBId);
+      if (ld) return ld;
+      ld = _searchBracketLiveData(t.bracket.losers, teamAId, teamBId);
+      if (ld) return ld;
+    }
+    // Round robin
+    if (t.roundRobin) {
+      for (var ri = 0; ri < t.roundRobin.length; ri++) {
+        var rm = t.roundRobin[ri];
+        if (rm && rm.liveData && ((rm.a === teamAId && rm.b === teamBId) || (rm.a === teamBId && rm.b === teamAId))) return rm.liveData;
+      }
+    }
+    // Single elim
+    if (Array.isArray(t.bracket)) {
+      var ld2 = _searchBracketLiveData(t.bracket, teamAId, teamBId);
+      if (ld2) return ld2;
+    }
+  }
+  return null;
+}
+
+function _searchBracketLiveData(rounds, teamAId, teamBId) {
+  if (!rounds) return null;
+  for (var r = 0; r < rounds.length; r++) {
+    var rd = rounds[r];
+    if (!rd) continue;
+    for (var mi = 0; mi < rd.length; mi++) {
+      var mm = rd[mi];
+      if (mm && mm.liveData && ((mm.a === teamAId && mm.b === teamBId) || (mm.a === teamBId && mm.b === teamAId))) return mm.liveData;
+    }
+  }
+  return null;
+}
+
+function formatSecondsTimer(sec) {
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+
+// Bracket Rendering
+function getRoundLabel(t, idx, totalRounds) {
+  if (idx === totalRounds - 1) return 'Finals';
+  if (idx === totalRounds - 2) return 'Semi-Finals';
+  if (idx === totalRounds - 3 && totalRounds > 3) return 'Quarter-Finals';
+  return 'Round ' + (idx + 1);
+}
+
+function renderViewerBracket(rounds, tournament) {
+  if (!rounds || rounds.length === 0) return '<div class="no-data"><div class="icon">\uD83D\uDCCB</div><div class="msg">No bracket data</div></div>';
+  var teams = g('teams') || [];
+  var totalRounds = rounds.length;
+  var getName = function(id) { return id ? (teams.find(function(t) { return t.id === id; }) || { name: id }).name : 'TBD'; };
+  var getLogo = function(id) { var tm = teams.find(function(t) { return t.id === id; }); return tm ? teamLogoHtml(tm, 20) : ''; };
+
+  var matchH = 90, gapY = 20, colW = 190, connW = 44, champW = 150, titleH = 32;
+  var r0 = rounds[0] || [];
+  var n = r0.length;
+  if (n === 0) return '<div class="no-data"><div class="icon">\uD83D\uDCCB</div><div class="msg">No matches yet</div></div>';
+  var spacing = matchH + gapY;
+
+  var pos = [];
+  for (var r = 0; r < totalRounds; r++) {
+    pos[r] = [];
+    var round = rounds[r] || [];
+    for (var mi = 0; mi < round.length; mi++) {
+      if (r === 0) { pos[0][mi] = mi * spacing + matchH / 2; }
+      else {
+        var t2 = mi * 2, b = mi * 2 + 1;
+        var tY = pos[r-1][t2] !== undefined ? pos[r-1][t2] : null;
+        var bY = pos[r-1][b] !== undefined ? pos[r-1][b] : null;
+        if (tY !== null && bY !== null) pos[r][mi] = (tY + bY) / 2;
+        else if (tY !== null) pos[r][mi] = tY;
+        else if (bY !== null) pos[r][mi] = bY;
+        else pos[r][mi] = mi * spacing * Math.pow(2, r) + matchH / 2;
+      }
+    }
+  }
+
+  var totalH = n * spacing;
+  var totalW = totalRounds * colW + totalRounds * connW + champW + 20;
+  var html = '<div class="v-bracket-canvas" style="position:relative;min-width:' + totalW + 'px;height:' + (totalH + titleH) + 'px;padding-top:' + titleH + 'px">';
+
+  for (var ri = 0; ri < totalRounds; ri++) {
+    html += '<div class="v-round-label" style="left:' + (ri * (colW + connW)) + 'px;width:' + colW + 'px">' + getRoundLabel(tournament, ri, totalRounds) + '</div>';
+  }
+
+  for (var rIdx = 0; rIdx < totalRounds; rIdx++) {
+    var rnd = rounds[rIdx] || [];
+    var x = rIdx * (colW + connW);
+    for (var mIdx = 0; mIdx < rnd.length; mIdx++) {
+      var m = rnd[mIdx]; if (!m) continue;
+      var cy = pos[rIdx][mIdx]; if (cy === undefined) continue;
+      var top = titleH + cy - matchH / 2;
+      var hasWinner = !!m.winner;
+      var winA = hasWinner && m.a && m.winner === m.a;
+      var winB = hasWinner && m.b && m.winner === m.b;
+      var sA = (m.scoreA !== undefined && m.scoreA !== null) ? m.scoreA : '';
+      var sB = (m.scoreB !== undefined && m.scoreB !== null) ? m.scoreB : '';
+      var hasScores = sA !== '' || sB !== '';
+      var clsA = 'v-seed' + (winA ? ' winner' : '') + (hasWinner && !winA && m.a ? ' loser' : '') + (!m.a ? ' tbd' : '');
+      var clsB = 'v-seed' + (winB ? ' winner' : '') + (hasWinner && !winB && m.b ? ' loser' : '') + (!m.b ? ' tbd' : '');
+      var scoreA = sA !== '' ? '<span class="v-seed-score' + (winA ? ' win' : '') + '">' + sA + '</span>' : '';
+      var scoreB = sB !== '' ? '<span class="v-seed-score' + (winB ? ' win' : '') + '">' + sB + '</span>' : '';
+      html += '<div class="v-match-box" style="left:' + x + 'px;top:' + top + 'px;width:' + colW + 'px;z-index:3">';
+      html += '<div class="' + clsA + '">' + (m.a ? getLogo(m.a) + '<span class="v-seed-name">' + escapeHtml(getName(m.a)) + '</span>' + scoreA : '<span class="v-seed-name">TBD</span>') + '</div>';
+      html += '<div class="' + clsB + '">' + (m.b ? getLogo(m.b) + '<span class="v-seed-name">' + escapeHtml(getName(m.b)) + '</span>' + scoreB : '<span class="v-seed-name">TBD</span>') + '</div>';
+      if (hasWinner && hasScores) html += '<div class="v-final-score">' + sA + ' - ' + sB + '</div>';
+      html += '</div>';
+    }
+  }
+
+  // Connectors
+  for (var cIdx = 0; cIdx < totalRounds - 1; cIdx++) {
+    var nextRound = rounds[cIdx + 1] || [];
+    var xRight = cIdx * (colW + connW) + colW;
+    var xMid = xRight + connW / 2;
+    for (var nm = 0; nm < nextRound.length; nm++) {
+      var ti = nm * 2, bi = nm * 2 + 1;
+      var tYc = pos[cIdx][ti], bYc = pos[cIdx][bi], nY = pos[cIdx + 1][nm];
+      if (tYc !== undefined && bYc !== undefined) {
+        html += '<div class="v-bc-h" style="left:' + xRight + 'px;top:' + (titleH + tYc) + 'px;width:' + (connW/2) + 'px;z-index:1"></div>';
+        html += '<div class="v-bc-h" style="left:' + xRight + 'px;top:' + (titleH + bYc) + 'px;width:' + (connW/2) + 'px;z-index:1"></div>';
+        html += '<div class="v-bc-v" style="left:' + xMid + 'px;top:' + (titleH + tYc) + 'px;height:' + (bYc - tYc) + 'px;z-index:1"></div>';
+        html += '<div class="v-bc-h" style="left:' + xMid + 'px;top:' + (titleH + nY) + 'px;width:' + (connW/2) + 'px;z-index:1"></div>';
+      } else if (tYc !== undefined) {
+        html += '<div class="v-bc-h" style="left:' + xRight + 'px;top:' + (titleH + tYc) + 'px;width:' + connW + 'px;z-index:1"></div>';
+      } else if (bYc !== undefined) {
+        html += '<div class="v-bc-h" style="left:' + xRight + 'px;top:' + (titleH + bYc) + 'px;width:' + connW + 'px;z-index:1"></div>';
+      }
+    }
+  }
+
+  var lastR = totalRounds - 1;
+  var finalMatch = (rounds[lastR] || [])[0];
+  var lx = lastR * (colW + connW) + colW;
+  var ly = pos[lastR] && pos[lastR][0] !== undefined ? pos[lastR][0] : totalH / 2;
+  html += '<div class="v-bc-h" style="left:' + lx + 'px;top:' + (titleH + ly) + 'px;width:' + (connW - 10) + 'px;z-index:1"></div>';
+  var cX = lx + connW - 10;
+  if (finalMatch && finalMatch.winner) {
+    var champName = getName(finalMatch.winner);
+    html += '<div class="v-champion" style="left:' + cX + 'px;top:' + (titleH + ly) + 'px;transform:translateY(-50%)">' + teamLogoHtml(teams.find(function(t) { return t.id === finalMatch.winner; }), 24) + ' \uD83C\uDFC6 ' + escapeHtml(champName) + '</div>';
+  } else {
+    html += '<div class="v-champion tbd" style="left:' + cX + 'px;top:' + (titleH + ly) + 'px;transform:translateY(-50%)">\uD83C\uDFC6 TBD</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// Round-robin viewer
+function renderViewerRR(matches, tournament) {
+  var teams = g('teams') || [];
+  var getName = function(id) { return id ? (teams.find(function(t) { return t.id === id; }) || { name: id }).name : 'TBD'; };
+  var html = '<div class="v-rr-grid">';
+  (matches || []).forEach(function(m, i) {
+    var aName = getName(m.a), bName = getName(m.b);
+    var aTeam = teams.find(function(t) { return t.id === m.a; }), bTeam = teams.find(function(t) { return t.id === m.b; });
+    var sA = m.scoreA !== undefined && m.scoreA !== null ? m.scoreA : '';
+    var sB = m.scoreB !== undefined && m.scoreB !== null ? m.scoreB : '';
+    html += '<div class="v-rr-card">';
+    html += '<div class="v-rr-header">Match ' + (i+1) + (sA !== '' ? ' \u00B7 ' + sA + ' - ' + sB : '') + '</div>';
+    html += '<div class="v-rr-team">' + teamLogoHtml(aTeam, 20) + '<span class="v-rr-team-name' + (m.winner === m.a ? ' winner' : '') + '">' + escapeHtml(aName) + '</span>' + (sA !== '' ? '<span class="v-rr-team-score">' + sA + '</span>' : '') + '</div>';
+    html += '<div class="v-rr-team">' + teamLogoHtml(bTeam, 20) + '<span class="v-rr-team-name' + (m.winner === m.b ? ' winner' : '') + '">' + escapeHtml(bName) + '</span>' + (sB !== '' ? '<span class="v-rr-team-score">' + sB + '</span>' : '') + '</div>';
+    if (m.played && m.winner) {
+      html += '<div class="v-rr-winner">\u2705 ' + escapeHtml(getName(m.winner)) + '</div>';
+    }
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+// Grand Final render
+function renderViewerGrandFinal(gf, teams) {
+  if (!gf) return '';
+  var getName = function(id) { return id ? (teams.find(function(t) { return t.id === id; }) || { name: id }).name : 'TBD'; };
+  var gfA = getName(gf.a), gfB = getName(gf.b);
+  var tA = teams.find(function(t) { return t.id === gf.a; }), tB = teams.find(function(t) { return t.id === gf.b; });
+  var sA = gf.scoreA !== undefined && gf.scoreA !== null ? gf.scoreA : '-';
+  var sB = gf.scoreB !== undefined && gf.scoreB !== null ? gf.scoreB : '-';
+
+  var html = '<div class="v-grand-final">';
+  html += '<div class="v-gf-title">\uD83C\uDFC6 Grand Final</div>';
+  html += '<div class="v-gf-slot' + (gf.winner === gf.a ? ' is-winner' : '') + (gf.winner && gf.winner !== gf.a ? ' is-loser' : '') + '">';
+  html += '<div class="v-gf-slot-info">' + teamLogoHtml(tA, 28) + '<span class="v-gf-slot-name">' + escapeHtml(gfA) + '</span></div>';
+  html += '<div class="v-gf-slot-score">' + sA + '</div></div>';
+  html += '<div class="v-gf-divider"><span class="v-gf-vs">VS</span></div>';
+  html += '<div class="v-gf-slot' + (gf.winner === gf.b ? ' is-winner' : '') + (gf.winner && gf.winner !== gf.b ? ' is-loser' : '') + '">';
+  html += '<div class="v-gf-slot-info">' + teamLogoHtml(tB, 28) + '<span class="v-gf-slot-name">' + escapeHtml(gfB) + '</span></div>';
+  html += '<div class="v-gf-slot-score">' + sB + '</div></div>';
+  if (gf.winner) {
+    var gwName = getName(gf.winner);
+    html += '<div class="v-gf-champion">\uD83C\uDFC6 Champion: ' + escapeHtml(gwName) + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+// Results Tab — show completed matches with scores
+var _resultsFilterTournament = null;
+
+function renderResultCard(m, teams) {
+  var ta = teams.find(function(t) { return t.id == m.a; });
+  var tb = teams.find(function(t) { return t.id == m.b; });
+  var nameA = ta ? ta.name : String(m.a || 'TBD');
+  var nameB = tb ? tb.name : String(m.b || 'TBD');
+  var sA = m.sa !== undefined && m.sa !== null ? m.sa : 0;
+  var sB = m.sb !== undefined && m.sb !== null ? m.sb : 0;
+  var winnerName = '';
+  if (m.winner) {
+    var wt = teams.find(function(t) { return t.id == m.winner; });
+    winnerName = wt ? wt.name : String(m.winner);
+  } else if (sA > sB) {
+    winnerName = nameA;
+  } else if (sB > sA) {
+    winnerName = nameB;
+  }
+  var isWinA = winnerName === nameA;
+  var isWinB = winnerName === nameB;
+
+  var logoA = ta && ta.logo ? '<img style="width:44px;height:44px;border-radius:12px;object-fit:cover;border:2px solid var(--border-color);box-shadow:0 4px 12px rgba(0,0,0,0.2)" src="' + escapeHtml(ta.logo) + '">' : '<div class="lmc-team-initial">' + escapeHtml(nameA.charAt(0).toUpperCase()) + '</div>';
+  var logoB = tb && tb.logo ? '<img style="width:44px;height:44px;border-radius:12px;object-fit:cover;border:2px solid var(--border-color);box-shadow:0 4px 12px rgba(0,0,0,0.2)" src="' + escapeHtml(tb.logo) + '">' : '<div class="lmc-team-initial">' + escapeHtml(nameB.charAt(0).toUpperCase()) + '</div>';
+
+  return '<div class="result-card">' +
+    '<div class="result-card-header">' +
+      '<span>' + escapeHtml(m.tournament || 'Match') + '</span>' +
+      '<span class="lmc-status completed">FINAL</span>' +
+    '</div>' +
+    '<div class="result-card-body">' +
+      '<div class="result-team">' + logoA + '<div class="result-team-name' + (isWinA ? ' winner' : '') + '">' + escapeHtml(nameA) + '</div></div>' +
+      '<div class="result-center">' +
+        '<div class="result-score">' + sA + ' : ' + sB + '</div>' +
+        (winnerName ? '<div class="result-winner-badge">\u2705 ' + escapeHtml(winnerName) + '</div>' : '') +
+      '</div>' +
+      '<div class="result-team">' + logoB + '<div class="result-team-name' + (isWinB ? ' winner' : '') + '">' + escapeHtml(nameB) + '</div></div>' +
+    '</div>' +
+    '<div class="result-card-footer">' +
+      (m.sport ? '<span class="lmc-tournament-badge">' + escapeHtml(m.sport) + '</span>' : '') +
+      '\uD83D\uDCC5 ' + escapeHtml(m.date || 'N/A') + (m.time ? ' \u00B7 ' + formatTime(m.time) : '') +
+      (m.court ? ' \u00B7 \uD83D\uDCCD ' + escapeHtml(m.court) : '') +
+    '</div>' +
+  '</div>';
+}
+
+function renderResultsTab(sportMatches, teams) {
+  var resultsEl = document.getElementById('resultsContent');
+  if (!resultsEl) return;
+
+  var completed = sportMatches.filter(function(m) { return m.status === 'completed'; })
+    .sort(function(a, b) { return ((b.date || '') + (b.time || '')).localeCompare((a.date || '') + (a.time || '')); });
+
+  if (completed.length === 0) {
+    resultsEl.innerHTML = '<div class="no-data"><div class="icon">\uD83C\uDFC6</div><div class="msg">No completed matches yet</div></div>';
+    return;
+  }
+
+  // Get unique tournaments for filter
+  var tournamentSet = {};
+  completed.forEach(function(m) { if (m.tournament) tournamentSet[m.tournament] = true; });
+  var tournamentList = Object.keys(tournamentSet).sort();
+
+  // Stats summary
+  var totalCompleted = completed.length;
+  var uniqueSports = {};
+  completed.forEach(function(m) { if (m.sport) uniqueSports[m.sport] = true; });
+  var sportsCount = Object.keys(uniqueSports).length;
+
+  var html = '';
+
+  // Summary stats
+  html += '<div class="results-summary">';
+  html += '<div class="result-stat"><div class="result-stat-num">' + totalCompleted + '</div><div class="result-stat-label">Completed</div></div>';
+  html += '<div class="result-stat"><div class="result-stat-num">' + sportsCount + '</div><div class="result-stat-label">Sports</div></div>';
+  html += '<div class="result-stat"><div class="result-stat-num">' + tournamentList.length + '</div><div class="result-stat-label">Tournaments</div></div>';
+  html += '</div>';
+
+  // Tournament filter buttons
+  if (tournamentList.length > 1) {
+    html += '<div class="result-tournament-filter">';
+    html += '<button class="result-filter-btn' + (!_resultsFilterTournament ? ' active' : '') + '" onclick="filterResults(null)">All</button>';
+    tournamentList.forEach(function(t) {
+      html += '<button class="result-filter-btn' + (_resultsFilterTournament === t ? ' active' : '') + '" onclick="filterResults(\'' + escapeHtml(t.replace(/'/g, "\\'")) + '\')">' + escapeHtml(t) + '</button>';
+    });
+    html += '</div>';
+  }
+
+  // Filter if needed
+  var filtered = _resultsFilterTournament ? completed.filter(function(m) { return m.tournament === _resultsFilterTournament; }) : completed;
+
+  // Group by date
+  var dateGroups = {};
+  filtered.forEach(function(m) {
+    var d = m.date || 'Unknown';
+    if (!dateGroups[d]) dateGroups[d] = [];
+    dateGroups[d].push(m);
+  });
+
+  Object.keys(dateGroups).sort(function(a, b) { return b.localeCompare(a); }).forEach(function(date) {
+    var label = date === 'Unknown' ? date : new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    html += '<div class="schedule-date-header">' + label + '</div>';
+    dateGroups[date].forEach(function(m) {
+      html += renderResultCard(m, teams);
+    });
+  });
+
+  resultsEl.innerHTML = html;
+}
+
+function filterResults(tournament) {
+  _resultsFilterTournament = tournament;
+  refreshData();
+}
+
+// Brackets Tab
+function renderBracketsTab() {
+  var tournaments = getFilteredTournaments();
+  var teams = g('teams') || [];
+  var filtered = viewerSportFilter ? tournaments.filter(function(t) { return t.sport === viewerSportFilter; }) : tournaments;
+  var contentEl = document.getElementById('bracketContent');
+  if (!contentEl) return;
+
+  if (filtered.length === 0) {
+    contentEl.innerHTML = '<div class="no-data"><div class="icon">\uD83C\uDFC6</div><div class="msg">No tournaments to display</div></div>';
+    return;
+  }
+
+  var formatNames = { single: 'Single Elim', double: 'Double Elim', roundrobin: 'Round Robin', groupknockout: 'Group + KO' };
+  var html = '';
+
+  filtered.forEach(function(t) {
+    var hasBracket = !!(t.bracket || t.roundRobin || t.groupStage);
+    var fmt = formatNames[t.format] || t.format || '';
+    var bo = t.bestOf && t.bestOf > 1 ? 'Bo' + t.bestOf : '';
+
+    html += '<div class="bracket-tournament-card">';
+    html += '<div class="btc-header">';
+    html += '<div><div class="btc-title">' + escapeHtml(t.name) + '</div></div>';
+    html += '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">';
+    if (fmt) html += '<span class="btc-format">' + escapeHtml(fmt) + (bo ? ' \u00B7 ' + bo : '') + '</span>';
+    if (t.winner) {
+      var wName = (teams.find(function(tm) { return tm.id === t.winner; }) || { name: t.winner }).name;
+      html += '<span class="btc-champion">\uD83C\uDFC6 ' + escapeHtml(wName) + '</span>';
+    }
+    html += '</div></div>';
+
+    html += '<div class="btc-body">';
+    if (!hasBracket) {
+      html += '<div class="no-data"><div class="icon">\uD83D\uDCCB</div><div class="msg">Bracket not generated yet</div></div>';
+    } else if (t.format === 'roundrobin' && t.roundRobin) {
+      html += renderViewerRR(t.roundRobin, t);
+    } else if (t.format === 'double' && t.bracket && t.bracket.winners) {
+      html += '<div class="btc-section-label">\uD83C\uDFC5 Winners Bracket</div>';
+      html += '<div class="v-bracket-wrapper">' + renderViewerBracket(t.bracket.winners, t) + '</div>';
+      html += '<div class="btc-section-label" style="margin-top:12px">\uD83D\uDD04 Losers Bracket</div>';
+      html += '<div class="v-bracket-wrapper">' + renderViewerBracket(t.bracket.losers || [], t) + '</div>';
+      html += renderViewerGrandFinal(t.grandFinal, teams);
+    } else if (t.format === 'groupknockout' && t.groupStage) {
+      html += '<div class="btc-section-label">\uD83D\uDCCB Group Stage</div>';
+      Object.keys(t.groupStage).forEach(function(gname) {
+        html += '<div style="margin:6px 0;padding:10px;border:1px solid var(--border-color);border-radius:10px;background:var(--bg)">';
+        html += '<div style="font-weight:700;font-size:0.82rem;margin-bottom:6px;color:var(--primary)">' + escapeHtml(gname) + '</div>';
+        (t.groupStage[gname] || []).forEach(function(m) {
+          var aName = m.a ? (teams.find(function(tm) { return tm.id === m.a; }) || { name: m.a }).name : 'TBD';
+          var bName = m.b ? (teams.find(function(tm) { return tm.id === m.b; }) || { name: m.b }).name : 'TBD';
+          html += '<div style="padding:4px 0;font-size:0.82rem;display:flex;align-items:center;gap:6px">';
+          html += '<span>' + escapeHtml(aName) + '</span><span style="color:var(--muted-text);font-size:0.7rem">VS</span><span>' + escapeHtml(bName) + '</span>';
+          if (m.played && m.winner) html += '<span style="margin-left:auto;color:var(--success);font-weight:600;font-size:0.75rem">\u2705 ' + escapeHtml((teams.find(function(tm) { return tm.id === m.winner; }) || { name: m.winner }).name) + '</span>';
+          html += '</div>';
+        });
+        html += '</div>';
+      });
+      if (t.bracket) {
+        html += '<div class="btc-section-label" style="margin-top:12px">\uD83C\uDFC6 Knockout Stage</div>';
+        html += '<div class="v-bracket-wrapper">' + renderViewerBracket(t.bracket, t) + '</div>';
+      }
+    } else if (Array.isArray(t.bracket)) {
+      html += '<div class="v-bracket-wrapper">' + renderViewerBracket(t.bracket, t) + '</div>';
+    }
+    html += '</div></div>';
+  });
+
+  contentEl.innerHTML = html;
+}
+
+// Refresh
+function refreshData() {
+  var allMatches = g('matches') || [];
+  var teams = g('teams') || [];
+  var tournaments = getFilteredTournaments();
+  var tournamentNames = {};
+  tournaments.forEach(function(t) { tournamentNames[t.name] = true; });
+  var matches;
+  if (viewerFilter.type === 'all') {
+    matches = allMatches;
+  } else {
+    matches = allMatches.filter(function(m) { return m.tournament && tournamentNames[m.tournament]; });
+  }
+  var sportMatches = viewerSportFilter ? matches.filter(function(m) { return m.sport === viewerSportFilter; }) : matches;
+
+  // Logo
+  var logo = localStorage.getItem('systemLogo');
+  var logoEl = document.getElementById('viewerLogo');
+  if (logoEl) logoEl.innerHTML = logo ? '<img src="' + logo + '" style="width:100%;height:100%;object-fit:cover">' : '<div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.3rem">\uD83C\uDFC6</div>';
+
+  // Live count
+  var liveCount = sportMatches.filter(function(m) { return m.status === 'live' || isMatchLive(m); }).length;
+  var liveInd = document.getElementById('liveIndicator');
+  if (liveInd) liveInd.style.display = liveCount > 0 ? 'flex' : 'none';
+
+  // Live Scores Tab
+  var liveEl = document.getElementById('liveContent');
+  if (liveEl) {
+    var liveMatches = sportMatches.filter(function(m) { return m.status === 'live' || (m.status !== 'completed' && isMatchLive(m)); });
+    var upcoming = sportMatches.filter(function(m) { return m.status !== 'completed' && !isMatchLive(m) && m.status !== 'live'; })
+      .sort(function(a, b) { return ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')); }).slice(0, 10);
+
+    var lhtml = '';
+    if (liveMatches.length > 0) {
+      lhtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-weight:800;font-size:0.9rem">\uD83D\uDD34 Live Now</span><span class="lmc-status live">' + liveMatches.length + '</span></div>';
+      lhtml += liveMatches.map(function(m) { return renderLiveCard(m, teams); }).join('');
+    }
+    if (upcoming.length > 0) {
+      lhtml += '<div style="display:flex;align-items:center;gap:8px;margin:20px 0 12px"><span style="font-weight:800;font-size:0.9rem">\uD83D\uDCC5 Up Next</span></div>';
+      lhtml += upcoming.map(function(m) { return renderLiveCard(m, teams); }).join('');
+    }
+    if (!liveMatches.length && !upcoming.length) {
+      lhtml = '<div class="no-data"><div class="icon">\u23F8\uFE0F</div><div class="msg">No matches right now</div></div>';
+    }
+    liveEl.innerHTML = lhtml;
+  }
+
+  // Schedule Tab
+  var schedEl = document.getElementById('scheduleContent');
+  if (schedEl) {
+    var sorted = sportMatches.slice().sort(function(a, b) { return ((a.date || '') + (a.time || '')).localeCompare((b.date || '') + (b.time || '')); });
+    if (sorted.length === 0) {
+      schedEl.innerHTML = '<div class="no-data"><div class="icon">\uD83D\uDCC5</div><div class="msg">No matches scheduled</div></div>';
+    } else {
+      var groups = {};
+      sorted.forEach(function(m) { var d = m.date || 'Unscheduled'; if (!groups[d]) groups[d] = []; groups[d].push(m); });
+      var shtml = '';
+      Object.keys(groups).forEach(function(date) {
+        var label = date === 'Unscheduled' ? date : new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        shtml += '<div class="schedule-date-header">' + label + '</div>';
+        shtml += groups[date].map(function(m) { return renderLiveCard(m, teams); }).join('');
+      });
+      schedEl.innerHTML = shtml;
+    }
+  }
+
+  // Brackets
+  renderBracketsTab();
+
+  // Results
+  renderResultsTab(sportMatches, teams);
+
+  // Timestamp
+  var ts = document.getElementById('lastRefresh');
+  if (ts) ts.textContent = new Date().toLocaleTimeString();
+}
+
+// Auto-refresh — reload from DB each cycle
+setInterval(function() {
+  viewerLoadData().then(function() {
+    if (document.getElementById('mainApp').style.display !== 'none') {
+      refreshData();
+    } else {
+      buildSportCards();
+    }
+  });
+}, 5000);
+
+// Initial load from database
+viewerLoadData().then(function() {
+  // Apply dark mode from DB data
+  var dm = g('darkMode');
+  if (dm === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+  
+  if (viewerFilter.type === 'event') {
+    // Show welcome screen with event name
+    var ev = (g('bigEvents') || []).find(function(e) { return e.id === viewerFilter.id; });
+    var welcomeScreen = document.getElementById('welcomeScreen');
+    var welcomeTitle = document.getElementById('welcomeTitle');
+    var welcomeSubtitle = document.getElementById('welcomeSubtitle');
+    
+    if (ev && welcomeScreen && welcomeTitle && welcomeSubtitle) {
+      welcomeTitle.textContent = ev.name;
+      welcomeSubtitle.textContent = 'Live Tournament Viewer';
+      welcomeScreen.style.display = 'flex';
+      document.getElementById('sportSelectScreen').style.display = 'none';
+    } else {
+      // Fallback: go straight to sport selection if event not found
+      document.getElementById('sportSelectScreen').style.display = 'flex';
+      buildSportCards();
+    }
+  } else if (viewerFilter.type === 'tournament') {
+    // Go directly to viewing that tournament — no sport selection
+    document.querySelector('.header-back').style.display = 'none';
+    selectSport(null);
+  } else {
+    // Default all-sports view — skip sport selection, show everything directly
+    document.querySelector('.header-back').style.display = 'none';
+    selectSport(null);
+  }
+});
+</script>
+</body>
+</html>
